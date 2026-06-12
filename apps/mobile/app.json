@@ -4,9 +4,7 @@
     "slug": "sudoku-platform",
     "version": "0.2.0",
     "orientation": "portrait",
-    "platforms": [
-      "android"
-    ],
+    "platforms": ["android"],
     "android": {
       "package": "com.sudokuvariant.app"
     },
