@@ -3,6 +3,7 @@
 Native Android application built using **Expo** and **React Native**, sharing the same rules, solver, and generator core engine from `@sudoku/core`.
 
 ## Features
+
 - Native performance and gesture cell inputs.
 - Shared TypeScript engine ensuring consistent variant validators.
 - Multi-language support (English/Spanish).
@@ -25,4 +26,5 @@ Native Android application built using **Expo** and **React Native**, sharing th
 ```bash
 npm --workspace @sudoku/mobile run build:apk
 ```
+
 This performs a local prebuild and compiles the native release APK.

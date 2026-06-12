@@ -3,6 +3,7 @@
 Responsive React + Vite web client for **SudoVerse**, sharing logic and rules verification with the native mobile app via `@sudoku/core`.
 
 ## Features
+
 - Fully responsive layout matching desktop, tablet, and mobile browsers.
 - Progressive Web App (PWA) capabilities for offline gameplay and browser installation.
 - Dynamic English and Spanish localization.
@@ -25,4 +26,5 @@ Responsive React + Vite web client for **SudoVerse**, sharing logic and rules ve
 ```bash
 npm run build:web
 ```
+
 This compiles the output into the `dist/` directory.

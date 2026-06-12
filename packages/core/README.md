@@ -22,13 +22,17 @@ This package houses the shared logic, solver, puzzle generators, and rule valida
 ## Development
 
 ### Running Typechecks
+
 To check typings across files:
+
 ```bash
 npm run typecheck
 ```
 
 ### Running Tests
+
 To run the Vitest test suite:
+
 ```bash
 npm run test
 ```

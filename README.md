@@ -17,12 +17,16 @@ Unified, multi-platform Sudoku platform with a shared rules and logic engine, av
 ## Quick Start
 
 ### 1. Prerequisites
+
 Ensure you have the following installed:
+
 - **Node.js** v20 or higher
 - **npm** v10 or higher
 
 ### 2. Install Dependencies
+
 Install all monorepo dependencies from the root directory:
+
 ```bash
 npm install
 ```
@@ -30,12 +34,15 @@ npm install
 ### 3. Run in Development
 
 - **Web App (React + Vite):**
+
   ```bash
   npm run dev:web
   ```
+
   Open [http://localhost:5173](http://localhost:5173).
 
 - **Mobile App (Android/Expo):**
+
   ```bash
   npm run dev:mobile
   ```
