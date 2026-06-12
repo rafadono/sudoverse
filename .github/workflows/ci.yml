@@ -1,0 +1,41 @@
+name: CI Code Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Auto-Formatting (Prettier)
+        run: npm run format
+
+      - name: Commit Formatting Corrections
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'style: auto-format code with Prettier'
+
+      - name: Run Typechecks
+        run: npm run typecheck
+
+      - name: Run Tests
+        run: npm run test

@@ -1,0 +1,13 @@
+﻿{
+  "name": "@sudoku/desktop",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "typecheck": "echo desktop-wrapper"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}

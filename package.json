@@ -1,0 +1,40 @@
+{
+  "name": "sudoverse",
+  "private": true,
+  "version": "0.2.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "bootstrap": "powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1",
+    "bootstrap:sh": "bash scripts/bootstrap.sh",
+    "setup:windows": "powershell -ExecutionPolicy Bypass -File scripts/setup-system.ps1",
+    "setup:linux": "bash scripts/setup/linux.sh",
+    "setup:ubuntu": "bash scripts/setup/ubuntu.sh",
+    "setup:fedora": "bash scripts/setup/fedora.sh",
+    "setup:macos": "bash scripts/setup/macos.sh",
+    "setup:system:sh": "bash scripts/setup-system.sh",
+    "dev:web": "npm --workspace @sudoku/web run dev",
+    "build:web": "npm --workspace @sudoku/web run build",
+    "build:desktop": "powershell -ExecutionPolicy Bypass -File scripts/build-desktop.ps1",
+    "build:desktop:sh": "bash scripts/build-desktop.sh",
+    "build:android": "powershell -ExecutionPolicy Bypass -File scripts/build-android.ps1",
+    "build:android:sh": "bash scripts/build-android.sh",
+    "build:flatpak": "powershell -ExecutionPolicy Bypass -File scripts/build-flatpak.ps1",
+    "build:flatpak:sh": "bash scripts/build-flatpak.sh",
+    "build:all": "powershell -ExecutionPolicy Bypass -File scripts/build-all.ps1",
+    "build:all:sh": "bash scripts/build-all.sh",
+    "dev:mobile": "npm --workspace @sudoku/mobile run start",
+    "dev:desktop": "npm --workspace @sudoku/desktop run tauri:dev",
+    "typecheck": "npm run -ws typecheck",
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

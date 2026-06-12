@@ -1,0 +1,23 @@
+﻿app-id: com.sudokuvariant.app
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: sudoku-platform
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --share=network
+
+modules:
+  - name: sudoku-platform
+    buildsystem: simple
+    build-commands:
+      - npm ci
+      - npm run build:web
+      - npm --workspace @sudoku/desktop run tauri:build
+      - install -Dm755 apps/desktop/src-tauri/target/release/sudoku_desktop /app/bin/sudoku-platform
+    sources:
+      - type: dir
+        path: ../../../

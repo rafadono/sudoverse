@@ -1,0 +1,86 @@
+﻿name: Build Apps
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install
+      - run: npm run build:web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist
+
+  desktop-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt update
+      - run: sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - run: npm install
+      - run: npm run build:web
+      - run: npm --workspace @sudoku/desktop run tauri:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux-bundles
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/appimage
+            apps/desktop/src-tauri/target/release/bundle/deb
+            apps/desktop/src-tauri/target/release/bundle/rpm
+
+  desktop-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install
+      - run: npm run build:web
+      - run: npm --workspace @sudoku/desktop run tauri:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows-bundles
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/nsis
+            apps/desktop/src-tauri/target/release/bundle/msi
+
+  android-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: npm install
+      - run: npx expo prebuild --platform android --non-interactive --project-dir apps/mobile
+      - run: |
+          cd apps/mobile/android
+          ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-release
+          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
