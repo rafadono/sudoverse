@@ -1,4 +1,4 @@
-﻿param(
+param(
   [switch]$SkipProjectDeps,
   [switch]$SkipAndroid,
   [switch]$SkipWindowsBuildTools

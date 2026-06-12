@@ -1,4 +1,4 @@
-﻿app-id: com.sudokuvariant.app
+app-id: com.sudokuvariant.app
 runtime: org.freedesktop.Platform
 runtime-version: '24.08'
 sdk: org.freedesktop.Sdk

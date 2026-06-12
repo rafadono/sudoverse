@@ -1,3 +1,3 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 bash "$(dirname "$0")/setup/linux.sh" "$@"
