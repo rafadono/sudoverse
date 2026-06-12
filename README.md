@@ -1,4 +1,4 @@
-# SudoVerse Monorepo
+# SudoVerse
 
 Unified, multi-platform Sudoku platform with a shared rules and logic engine, available for **Web**, **Android (Mobile)**, and **Desktop (Windows/Linux)**.
 
