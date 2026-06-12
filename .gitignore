@@ -22,6 +22,7 @@ apps/mobile/ios/
 
 # Tauri
 apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
 
 # Local env files
 .env
