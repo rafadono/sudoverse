@@ -8,7 +8,7 @@ function run(cmd, dir = projectRoot, env = {}) {
   childProcess.execSync(cmd, {
     cwd: dir,
     stdio: 'inherit',
-    env: { ...process.env, ...env }
+    env: { ...process.env, ...env },
   });
 }
 
@@ -71,7 +71,7 @@ switch (command) {
     const psArgs = [];
     const shArgs = [];
 
-    args.slice(1).forEach(arg => {
+    args.slice(1).forEach((arg) => {
       if (arg === '--skip-project-deps') {
         psArgs.push('-SkipProjectDeps');
         shArgs.push('--skip-project-deps');
@@ -134,7 +134,9 @@ function printHelp() {
   console.log('  android            Runs Expo prebuild and compiles Android Release APK');
   console.log('  flatpak            Compiles desktop app into a Flatpak package');
   console.log('  setup-system       Configures native packages and dependencies for the host OS');
-  console.log('  all                Compiles web and desktop (optionally android/flatpak via flags)\n');
+  console.log(
+    '  all                Compiles web and desktop (optionally android/flatpak via flags)\n'
+  );
   console.log('Options:');
   console.log('  --skip-install     Used with bootstrap to skip installing dependencies');
   console.log('  --with-android     Used with all to run Android compilation');
