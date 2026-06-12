@@ -1,8 +1,11 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
-npx expo prebuild --platform android --non-interactive --project-dir apps/mobile
+Push-Location apps/mobile
+$env:CI = "1"
+npx expo prebuild --platform android
+Pop-Location
 
 Push-Location apps/mobile/android
 ./gradlew.bat assembleRelease

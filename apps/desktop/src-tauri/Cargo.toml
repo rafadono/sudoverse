@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "sudoku_desktop"
 version = "0.2.0"
 edition = "2021"
@@ -8,6 +8,7 @@ tauri-build = { version = "2.0.0", features = [] }
 
 [dependencies]
 tauri = { version = "2.0.0", features = [] }
+time = "=0.3.36"
 
 [features]
 default = ["custom-protocol"]

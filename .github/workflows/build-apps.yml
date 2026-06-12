@@ -1,4 +1,4 @@
-﻿name: Build Apps
+name: Build Apps
 
 on:
   workflow_dispatch:
@@ -76,7 +76,11 @@ jobs:
           java-version: '17'
       - uses: android-actions/setup-android@v3
       - run: npm install
-      - run: npx expo prebuild --platform android --non-interactive --project-dir apps/mobile
+      - name: Prebuild mobile app
+        working-directory: apps/mobile
+        env:
+          CI: 1
+        run: npx expo prebuild --platform android
       - run: |
           cd apps/mobile/android
           ./gradlew assembleRelease
