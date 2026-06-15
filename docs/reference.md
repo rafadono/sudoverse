@@ -46,14 +46,14 @@ We have a series of cross-platform scripts within the `scripts/` directory to fa
 
 ### Quick Commands (NPM)
 
-| Action                   | Windows (PowerShell)    | Linux / macOS (Bash)       |
-| :----------------------- | :---------------------- | :------------------------- |
-| **Install Dependencies** | `npm run bootstrap`     | `npm run bootstrap:sh`     |
-| **Compile Web**          | `npm run build:web`     | `npm run build:web`        |
-| **Compile Desktop**      | `npm run build:desktop` | `npm run build:desktop:sh` |
-| **Compile Android**      | `npm run build:android` | `npm run build:android:sh` |
-| **Compile Flatpak**      | `npm run build:flatpak` | `npm run build:flatpak:sh` |
-| **Compile All**          | `npm run build:all`     | `npm run build:all:sh`     |
+| Action                   | Windows (PowerShell)    | Linux / macOS (Bash)    |
+| :----------------------- | :---------------------- | :---------------------- |
+| **Install Dependencies** | `npm run bootstrap`     | `npm run bootstrap`     |
+| **Compile Web**          | `npm run build:web`     | `npm run build:web`     |
+| **Compile Desktop**      | `npm run build:desktop` | `npm run build:desktop` |
+| **Compile Android**      | `npm run build:android` | `npm run build:android` |
+| **Compile Flatpak**      | `npm run build:flatpak` | `npm run build:flatpak` |
+| **Compile All**          | `npm run build:all`     | `npm run build:all`     |
 
 ---
 
@@ -66,9 +66,9 @@ System installation and configuration scripts are located at:
 
 ### Running System Configuration
 
-- **Windows:** `npm run setup:windows`
-- **Linux:** `sudo npm run setup:linux`
-- **macOS:** `npm run setup:macos`
+- **Windows:** `npm run setup:system`
+- **Linux:** `sudo npm run setup:system`
+- **macOS:** `npm run setup:system`
 
 ---
 

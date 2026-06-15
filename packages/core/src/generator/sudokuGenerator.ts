@@ -68,6 +68,133 @@ const JIGSAW_TEMPLATES = [
 ];
 
 function generateJigsawRegions(): number[][] {
+  const SIZE = 9;
+
+  for (let attempt = 0; attempt < 200; attempt += 1) {
+    const grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(-1));
+    let success = true;
+
+    for (let regId = 0; regId < SIZE - 1; regId += 1) {
+      let start: Position | null = null;
+      for (let r = 0; r < SIZE; r += 1) {
+        for (let c = 0; c < SIZE; c += 1) {
+          if (grid[r][c] === -1) {
+            start = { row: r, col: c };
+            break;
+          }
+        }
+        if (start) break;
+      }
+
+      if (!start) {
+        success = false;
+        break;
+      }
+
+      const regionCells: Position[] = [start];
+      grid[start.row][start.col] = regId;
+      let regionSuccess = false;
+
+      for (let growAttempt = 0; growAttempt < 50; growAttempt += 1) {
+        for (const cell of regionCells) {
+          grid[cell.row][cell.col] = -1;
+        }
+        regionCells.length = 0;
+        regionCells.push(start);
+        grid[start.row][start.col] = regId;
+
+        while (regionCells.length < SIZE) {
+          const neighbors: Position[] = [];
+          const seen = new Set<string>();
+
+          for (const cell of regionCells) {
+            const adj = [
+              { row: cell.row - 1, col: cell.col },
+              { row: cell.row + 1, col: cell.col },
+              { row: cell.row, col: cell.col - 1 },
+              { row: cell.row, col: cell.col + 1 },
+            ];
+
+            for (const a of adj) {
+              if (
+                a.row >= 0 &&
+                a.row < SIZE &&
+                a.col >= 0 &&
+                a.col < SIZE &&
+                grid[a.row][a.col] === -1
+              ) {
+                const key = `${a.row}-${a.col}`;
+                if (!seen.has(key)) {
+                  seen.add(key);
+                  neighbors.push(a);
+                }
+              }
+            }
+          }
+
+          if (neighbors.length === 0) break;
+          const chosen = neighbors[Math.floor(Math.random() * neighbors.length)];
+          grid[chosen.row][chosen.col] = regId;
+          regionCells.push(chosen);
+        }
+
+        if (regionCells.length === SIZE) {
+          regionSuccess = true;
+          break;
+        }
+      }
+
+      if (!regionSuccess) {
+        success = false;
+        break;
+      }
+    }
+
+    if (success) {
+      const lastCells: Position[] = [];
+      for (let r = 0; r < SIZE; r += 1) {
+        for (let c = 0; c < SIZE; c += 1) {
+          if (grid[r][c] === -1) {
+            grid[r][c] = SIZE - 1;
+            lastCells.push({ row: r, col: c });
+          }
+        }
+      }
+
+      if (lastCells.length === SIZE) {
+        const visited = new Set<string>();
+        const queue: Position[] = [lastCells[0]];
+        visited.add(`${lastCells[0].row}-${lastCells[0].col}`);
+        let count = 0;
+
+        while (queue.length > 0) {
+          const curr = queue.shift()!;
+          count += 1;
+          const adj = [
+            { row: curr.row - 1, col: curr.col },
+            { row: curr.row + 1, col: curr.col },
+            { row: curr.row, col: curr.col - 1 },
+            { row: curr.row, col: curr.col + 1 },
+          ];
+
+          for (const a of adj) {
+            if (grid[a.row]?.[a.col] === SIZE - 1) {
+              const key = `${a.row}-${a.col}`;
+              if (!visited.has(key)) {
+                visited.add(key);
+                queue.push(a);
+              }
+            }
+          }
+        }
+
+        if (count === SIZE) {
+          return grid;
+        }
+      }
+    }
+  }
+
   const template = JIGSAW_TEMPLATES[Math.floor(Math.random() * JIGSAW_TEMPLATES.length)];
   return template.map((row) => [...row]);
 }
