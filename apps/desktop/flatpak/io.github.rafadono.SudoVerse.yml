@@ -1,21 +1,27 @@
 # Flathub manifest for SudoVerse.
 #
-# IMPORTANT — before this will build on Flathub's infra:
-# flatpak-builder disables network access during the actual build phase, but
-# `cargo build` (invoked by `tauri build` below) needs to fetch every crate in
-# Cargo.lock from crates.io. You must vendor those crates as extra `sources`
-# entries, generated once via:
+# IMPORTANT — before this can be *submitted* to Flathub:
+# Flathub's own build farm disables network access during the build phase,
+# but `cargo build` (invoked by `tauri build` below) needs to fetch every
+# crate in Cargo.lock from crates.io, and `npm ci` needs the npm registry.
+# The `--share=network` build-arg below is a CI-only convenience so this
+# manifest builds as a sanity check on a normal GitHub Actions runner (which
+# does not enforce that restriction) — Flathub's reviewers will reject a
+# submission that keeps it. Before actually submitting, vendor the Cargo
+# deps as extra `sources` entries, generated once via:
 #   pip install --user aiohttp toml
 #   curl -O https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
 #   python3 flatpak-cargo-generator.py ../../src-tauri/Cargo.lock -o cargo-sources.json
-# then add `- cargo-sources.json` to the `sources` list below and re-run
-# `npm --workspace @sudoku/desktop run tauri:build -- --offline` cargo-side.
-# This is a one-time step per Cargo.lock change, not something this repo's
-# CI can do without checking that generated file in, so it's left as a TODO.
+# then add `- cargo-sources.json` to the `sources` list below, remove
+# `--share=network`, and switch `npm ci` to an npm mirror/offline cache (npm
+# has no first-party vendoring equivalent to Cargo's).
 app-id: io.github.rafadono.SudoVerse
 runtime: org.freedesktop.Platform
 runtime-version: '24.08'
 sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.node20
+  - org.freedesktop.Sdk.Extension.rust-stable
 command: sudoverse
 
 finish-args:
@@ -28,6 +34,10 @@ finish-args:
 modules:
   - name: sudoverse
     buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/node20/bin:/usr/lib/sdk/rust-stable/bin
+      build-args:
+        - --share=network
     build-commands:
       - npm ci
       - npm run build:web
