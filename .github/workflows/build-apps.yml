@@ -5,6 +5,13 @@ on:
   push:
     branches: [main]
 
+# A newer push (e.g. a CI-fix iteration) cancels whatever's still building for
+# the previous one instead of leaving both running in parallel — relevant
+# here since these jobs run long enough to overlap across quick pushes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   web:
     runs-on: ubuntu-latest
