@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "SudoVerse",
+  "version": "0.2.0",
+  "identifier": "io.github.rafadono.SudoVerse",
+  "build": {
+    "beforeDevCommand": "npm --prefix ../.. --workspace @sudoku/web run dev",
+    "beforeBuildCommand": "npm --prefix ../.. --workspace @sudoku/web run build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../../web/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "SudoVerse",
+        "width": 1000,
+        "height": 860,
+        "resizable": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["appimage", "deb", "rpm", "nsis", "msi"],
+    "publisher": "rafadono",
+    "homepage": "https://github.com/rafadono/sudoverse",
+    "shortDescription": "Unified, multi-platform Sudoku game with 8 variants.",
+    "longDescription": "SudoVerse is a Sudoku game with a shared TypeScript engine for Classic, Diagonal, Killer, Hyper, Jigsaw, Sandwich, Thermo and Arrow variants.",
+    "category": "Game",
+    "license": "MIT",
+    "licenseFile": "../../../LICENSE",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  }
+}

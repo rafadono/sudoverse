@@ -62,6 +62,34 @@ jobs:
             apps/desktop/src-tauri/target/release/bundle/nsis
             apps/desktop/src-tauri/target/release/bundle/msi
 
+  desktop-snap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: snapcore/action-build@v1
+        id: snapcraft
+        with:
+          path: apps/desktop/snap
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux-snap
+          path: ${{ steps.snapcraft.outputs.snap }}
+
+  desktop-flatpak:
+    runs-on: ubuntu-latest
+    # Known-broken until Cargo dependencies are vendored for the sandboxed,
+    # network-disabled flatpak-builder build — see the TODO in
+    # apps/desktop/flatpak/io.github.rafadono.SudoVerse.yml. Kept non-blocking
+    # so the rest of the pipeline stays green while that's pending.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: sudoverse.flatpak
+          manifest-path: apps/desktop/flatpak/io.github.rafadono.SudoVerse.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+
   android-apk:
     runs-on: ubuntu-latest
     steps:

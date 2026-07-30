@@ -1,0 +1,68 @@
+# Snap Store manifest for SudoVerse.
+#
+# Unlike Flathub/flatpak-builder, Snapcraft's build farm allows network access
+# during the build, so `cargo`/`npm` can fetch dependencies directly — no
+# vendoring step needed here (see ../flatpak/*.yml for the Flatpak caveat).
+#
+# Build locally with: cd apps/desktop/snap && snapcraft
+# Publish with:       snapcraft login && snapcraft upload *.snap
+name: sudoverse
+version: '0.2.0'
+summary: Unified, multi-platform Sudoku game with 8 variants
+description: |
+  SudoVerse is a Sudoku game built on a shared TypeScript engine, with native
+  support for Classic, Diagonal (X), Killer, Hyper (Windoku), Jigsaw
+  (Irregular), Sandwich, Thermo, and Arrow Sudoku variants. Includes a
+  backtracking solver, procedural puzzle generator, hints, and English and
+  Spanish localization.
+grade: stable
+confinement: strict
+base: core24
+license: MIT
+
+apps:
+  sudoverse:
+    command: bin/sudoku_desktop
+    plugs:
+      - network
+      - opengl
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - browser-support
+    environment:
+      DISABLE_WAYLAND: 1
+
+parts:
+  sudoverse:
+    plugin: nil
+    source: ../../..
+    build-packages:
+      - curl
+      - build-essential
+      - libwebkit2gtk-4.1-dev
+      - libssl-dev
+      - libayatana-appindicator3-dev
+      - librsvg2-dev
+      - libxdo-dev
+      - file
+    stage-packages:
+      - libwebkit2gtk-4.1-0
+      - libayatana-appindicator3-1
+      - librsvg2-2
+    override-build: |
+      export CARGO_HOME="$CRAFT_PART_BUILD/.cargo"
+      export RUSTUP_HOME="$CRAFT_PART_BUILD/.rustup"
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+      . "$CARGO_HOME/env"
+
+      curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+      apt-get install -y nodejs
+
+      npm ci
+      npm run build:web
+      npm --workspace @sudoku/desktop run tauri:build
+
+      install -Dm755 apps/desktop/src-tauri/target/release/sudoku_desktop \
+        "$CRAFT_PART_INSTALL/bin/sudoku_desktop"

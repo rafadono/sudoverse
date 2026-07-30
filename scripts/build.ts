@@ -52,6 +52,14 @@ switch (command) {
     console.log('Build android completed.');
     break;
   }
+  case 'desktop': {
+    console.log('Compiling desktop application (Tauri native bundles)...');
+    run('npm --workspace @sudoku/desktop run tauri:build');
+    console.log(
+      'Build desktop completed. Bundles are in apps/desktop/src-tauri/target/release/bundle/.'
+    );
+    break;
+  }
   case 'setup-system': {
     console.log('Configuring development environment setup dependencies...');
     const psArgs: string[] = [];
@@ -93,6 +101,11 @@ switch (command) {
       const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
       run(`${gradlew} assembleRelease`, path.join(mobileDir, 'android'));
     }
+
+    if (args.includes('--with-desktop')) {
+      run('npm --workspace @sudoku/desktop run tauri:build');
+    }
+
     console.log('All builds completed successfully.');
     break;
   }
@@ -110,9 +123,11 @@ function printHelp(): void {
   console.log('  bootstrap          Installs monorepo npm dependencies');
   console.log('  web                Compiles the responsive React web client');
   console.log('  android            Runs Expo prebuild and compiles Android Release APK');
+  console.log('  desktop            Compiles native Tauri bundles (AppImage/deb/rpm/NSIS/MSI)');
   console.log('  setup-system       Configures native packages and dependencies for the host OS');
-  console.log('  all                Compiles web (optionally android via flags)\n');
+  console.log('  all                Compiles web (optionally android/desktop via flags)\n');
   console.log('Options:');
   console.log('  --skip-install     Used with bootstrap to skip installing dependencies');
   console.log('  --with-android     Used with all to run Android compilation');
+  console.log('  --with-desktop     Used with all to run desktop (Tauri) compilation');
 }

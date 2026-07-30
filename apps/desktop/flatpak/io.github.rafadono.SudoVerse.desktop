@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=SudoVerse
+Comment=Unified, multi-platform Sudoku game with 8 variants
+Exec=sudoverse
+Icon=io.github.rafadono.SudoVerse
+Terminal=false
+Categories=Game;LogicGame;

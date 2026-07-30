@@ -1,0 +1,45 @@
+# Flathub manifest for SudoVerse.
+#
+# IMPORTANT — before this will build on Flathub's infra:
+# flatpak-builder disables network access during the actual build phase, but
+# `cargo build` (invoked by `tauri build` below) needs to fetch every crate in
+# Cargo.lock from crates.io. You must vendor those crates as extra `sources`
+# entries, generated once via:
+#   pip install --user aiohttp toml
+#   curl -O https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
+#   python3 flatpak-cargo-generator.py ../../src-tauri/Cargo.lock -o cargo-sources.json
+# then add `- cargo-sources.json` to the `sources` list below and re-run
+# `npm --workspace @sudoku/desktop run tauri:build -- --offline` cargo-side.
+# This is a one-time step per Cargo.lock change, not something this repo's
+# CI can do without checking that generated file in, so it's left as a TODO.
+app-id: io.github.rafadono.SudoVerse
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: sudoverse
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --talk-name=org.freedesktop.portal.OpenURI
+
+modules:
+  - name: sudoverse
+    buildsystem: simple
+    build-commands:
+      - npm ci
+      - npm run build:web
+      - npm --workspace @sudoku/desktop run tauri:build
+      - install -Dm755 apps/desktop/src-tauri/target/release/sudoku_desktop /app/bin/sudoverse
+      - install -Dm644 apps/desktop/flatpak/io.github.rafadono.SudoVerse.desktop
+        /app/share/applications/io.github.rafadono.SudoVerse.desktop
+      - install -Dm644 apps/desktop/flatpak/io.github.rafadono.SudoVerse.metainfo.xml
+        /app/share/metainfo/io.github.rafadono.SudoVerse.metainfo.xml
+      - install -Dm644 apps/desktop/src-tauri/icons/128x128.png
+        /app/share/icons/hicolor/128x128/apps/io.github.rafadono.SudoVerse.png
+    sources:
+      - type: dir
+        path: ../../../
+      # - cargo-sources.json   # see the TODO above

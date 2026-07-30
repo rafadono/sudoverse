@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.rafadono.SudoVerse</id>
+  <name>SudoVerse</name>
+  <summary>Unified, multi-platform Sudoku game with 8 variants</summary>
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.rafadono">
+    <name>rafadono</name>
+  </developer>
+  <description>
+    <p>
+      SudoVerse is a Sudoku game built on a shared TypeScript engine, with native
+      support for Classic, Diagonal (X), Killer, Hyper (Windoku), Jigsaw
+      (Irregular), Sandwich, Thermo, and Arrow Sudoku variants. Includes a
+      backtracking solver, procedural puzzle generator, hints, and English and
+      Spanish localization.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.rafadono.SudoVerse.desktop</launchable>
+  <url type="homepage">https://github.com/rafadono/sudoverse</url>
+  <url type="bugtracker">https://github.com/rafadono/sudoverse/issues</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Classic Sudoku in progress</caption>
+      <image>https://raw.githubusercontent.com/rafadono/sudoverse/main/apps/desktop/flatpak/screenshots/main.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1" />
+  <categories>
+    <category>Game</category>
+    <category>LogicGame</category>
+  </categories>
+  <releases>
+    <release version="0.2.0" date="2026-07-30" />
+  </releases>
+</component>
