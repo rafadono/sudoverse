@@ -62,7 +62,12 @@ export function Calculator({ onClose, lang }: CalculatorProps) {
     <div className="calculator-widget">
       <div className="calculator-header">
         <span>{getTranslation('calculatorTitle', lang)}</span>
-        <button type="button" className="calc-close-btn" onClick={onClose} aria-label="Close calculator">
+        <button
+          type="button"
+          className="calc-close-btn"
+          onClick={onClose}
+          aria-label="Close calculator"
+        >
           ✕
         </button>
       </div>

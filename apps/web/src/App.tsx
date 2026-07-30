@@ -36,7 +36,9 @@ export default function App() {
   const [lang, setLang] = useState<Language>('en');
   const [variant, setVariant] = useState<VariantType>('classic');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [puzzle, setPuzzle] = useState<Puzzle>(() => puzzlePoolManager.getPuzzle('classic', 'medium'));
+  const [puzzle, setPuzzle] = useState<Puzzle>(() =>
+    puzzlePoolManager.getPuzzle('classic', 'medium')
+  );
   const [board, setBoard] = useState<number[][]>(() => deepClone(puzzle.givens));
   const [solvedBoard, setSolvedBoard] = useState<number[][] | null>(null);
   const [selected, setSelected] = useState<{ row: number; col: number } | null>(null);

@@ -6,7 +6,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
 
-function run(cmd: string, dir: string = projectRoot, env: Record<string, string | undefined> = {}): void {
+function run(
+  cmd: string,
+  dir: string = projectRoot,
+  env: Record<string, string | undefined> = {}
+): void {
   console.log(`> Running: ${cmd}`);
   childProcess.execSync(cmd, {
     cwd: dir,
@@ -107,9 +111,7 @@ function printHelp(): void {
   console.log('  web                Compiles the responsive React web client');
   console.log('  android            Runs Expo prebuild and compiles Android Release APK');
   console.log('  setup-system       Configures native packages and dependencies for the host OS');
-  console.log(
-    '  all                Compiles web (optionally android via flags)\n'
-  );
+  console.log('  all                Compiles web (optionally android via flags)\n');
   console.log('Options:');
   console.log('  --skip-install     Used with bootstrap to skip installing dependencies');
   console.log('  --with-android     Used with all to run Android compilation');
