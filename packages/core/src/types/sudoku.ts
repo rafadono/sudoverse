@@ -34,7 +34,7 @@ export interface Puzzle {
   id: string;
   variant: VariantType;
   givens: number[][];
-  solution?: number[][];
+  solution: number[][];
   cages?: Cage[];
   jigsawRegions?: number[][]; // 9x9 grid mapping each cell to region 0-8
   sandwichClues?: SandwichClues;

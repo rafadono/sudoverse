@@ -1,5 +1,6 @@
 import { Arrow, Cage, Position, SandwichClues, VariantType } from '../types/sudoku';
 import { isSafeMove } from './validators';
+import { shuffleArray } from './random';
 
 /**
  * Finds the empty cell with Minimum Remaining Values (MRV heuristic).
@@ -60,15 +61,6 @@ function findEmptyMRV(
   return [bestPos[0], bestPos[1], minCandidates];
 }
 
-function shuffled(arr: number[]): number[] {
-  const clone = [...arr];
-  for (let i = clone.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [clone[i], clone[j]] = [clone[j], clone[i]];
-  }
-  return clone;
-}
-
 export function solveBoard(
   board: number[][],
   variant: VariantType,
@@ -99,7 +91,7 @@ export function solveBoard(
     const [row, col, candidates] = empty;
     if (candidates.length === 0) return false;
 
-    const randomizedCandidates = shuffled(candidates);
+    const randomizedCandidates = shuffleArray(candidates);
 
     for (const n of randomizedCandidates) {
       board[row][col] = n;
@@ -113,7 +105,18 @@ export function solveBoard(
   return solve();
 }
 
-export function countSolutions(
+export interface SolutionCount {
+  count: number;
+  /** True if the search hit the step budget before it could fully determine the count. */
+  truncated: boolean;
+}
+
+/**
+ * Same search as `countSolutions`, but also reports whether the step budget was
+ * exhausted before the search could finish — `count` is unreliable when `truncated`
+ * is true, since the search may have stopped short of exploring every branch.
+ */
+export function countSolutionsDetailed(
   board: number[][],
   variant: VariantType,
   cages?: Cage[],
@@ -121,15 +124,20 @@ export function countSolutions(
   sandwichClues?: SandwichClues,
   thermometers?: Position[][],
   arrows?: Arrow[],
-  limit = 2
-): number {
+  limit = 2,
+  maxSteps = 2500
+): SolutionCount {
   let total = 0;
   let steps = 0;
-  const maxSteps = 2500;
+  let truncated = false;
 
   function search(): void {
     steps += 1;
-    if (steps > maxSteps || total >= limit) return;
+    if (steps > maxSteps) {
+      truncated = true;
+      return;
+    }
+    if (total >= limit) return;
 
     const empty = findEmptyMRV(
       board,
@@ -152,9 +160,32 @@ export function countSolutions(
       board[row][col] = n;
       search();
       board[row][col] = 0;
+      if (truncated) return;
     }
   }
 
   search();
-  return total;
+  return { count: total, truncated };
+}
+
+export function countSolutions(
+  board: number[][],
+  variant: VariantType,
+  cages?: Cage[],
+  jigsawRegions?: number[][],
+  sandwichClues?: SandwichClues,
+  thermometers?: Position[][],
+  arrows?: Arrow[],
+  limit = 2
+): number {
+  return countSolutionsDetailed(
+    board,
+    variant,
+    cages,
+    jigsawRegions,
+    sandwichClues,
+    thermometers,
+    arrows,
+    limit
+  ).count;
 }

@@ -1,4 +1,5 @@
-import { solveBoard, countSolutions } from '../engine/solver';
+import { solveBoard, countSolutionsDetailed } from '../engine/solver';
+import { orthogonalNeighbors, shuffledCells } from '../engine/random';
 import {
   Arrow,
   Cage,
@@ -24,22 +25,6 @@ function holesByDifficulty(difficulty: Difficulty): number {
     default:
       return 45;
   }
-}
-
-function randomCells(): Array<[number, number]> {
-  const cells: Array<[number, number]> = [];
-  for (let r = 0; r < 9; r += 1) {
-    for (let c = 0; c < 9; c += 1) {
-      cells.push([r, c]);
-    }
-  }
-
-  for (let i = cells.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cells[i], cells[j]] = [cells[j], cells[i]];
-  }
-
-  return cells;
 }
 
 const JIGSAW_TEMPLATES = [
@@ -108,21 +93,8 @@ function generateJigsawRegions(): number[][] {
           const seen = new Set<string>();
 
           for (const cell of regionCells) {
-            const adj = [
-              { row: cell.row - 1, col: cell.col },
-              { row: cell.row + 1, col: cell.col },
-              { row: cell.row, col: cell.col - 1 },
-              { row: cell.row, col: cell.col + 1 },
-            ];
-
-            for (const a of adj) {
-              if (
-                a.row >= 0 &&
-                a.row < SIZE &&
-                a.col >= 0 &&
-                a.col < SIZE &&
-                grid[a.row][a.col] === -1
-              ) {
+            for (const a of orthogonalNeighbors(cell, SIZE)) {
+              if (grid[a.row][a.col] === -1) {
                 const key = `${a.row}-${a.col}`;
                 if (!seen.has(key)) {
                   seen.add(key);
@@ -170,15 +142,9 @@ function generateJigsawRegions(): number[][] {
         while (queue.length > 0) {
           const curr = queue.shift()!;
           count += 1;
-          const adj = [
-            { row: curr.row - 1, col: curr.col },
-            { row: curr.row + 1, col: curr.col },
-            { row: curr.row, col: curr.col - 1 },
-            { row: curr.row, col: curr.col + 1 },
-          ];
 
-          for (const a of adj) {
-            if (grid[a.row]?.[a.col] === SIZE - 1) {
+          for (const a of orthogonalNeighbors(curr, SIZE)) {
+            if (grid[a.row][a.col] === SIZE - 1) {
               const key = `${a.row}-${a.col}`;
               if (!visited.has(key)) {
                 visited.add(key);
@@ -238,53 +204,26 @@ function generateThermometers(solution: number[][]): Position[][] {
   const used = Array.from({ length: 9 }, () => Array(9).fill(false));
 
   for (let t = 0; t < 4; t += 1) {
-    let startR = -1;
-    let startC = -1;
-    for (let attempt = 0; attempt < 50; attempt += 1) {
-      const r = Math.floor(Math.random() * 9);
-      const c = Math.floor(Math.random() * 9);
-      if (!used[r][c]) {
-        startR = r;
-        startC = c;
-        break;
-      }
-    }
-    if (startR === -1) continue;
+    const startCell = shuffledCells().find((cell) => !used[cell.row][cell.col]);
+    if (!startCell) continue;
 
-    const path: Position[] = [{ row: startR, col: startC }];
-    used[startR][startC] = true;
+    const path: Position[] = [startCell];
+    used[startCell.row][startCell.col] = true;
 
     const targetLen = 3 + Math.floor(Math.random() * 2); // 3 or 4
-    let currR = startR;
-    let currC = startC;
+    let curr = startCell;
 
     for (let len = 1; len < targetLen; len += 1) {
-      const currVal = solution[currR][currC];
-      const nextCandidates: { r: number; c: number }[] = [];
-      const neighbors = [
-        { r: currR - 1, c: currC },
-        { r: currR + 1, c: currC },
-        { r: currR, c: currC - 1 },
-        { r: currR, c: currC + 1 },
-      ];
+      const currVal = solution[curr.row][curr.col];
+      const nextCandidates = orthogonalNeighbors(curr).filter(
+        (n) => !used[n.row][n.col] && solution[n.row][n.col] > currVal
+      );
 
-      for (const n of neighbors) {
-        if (n.r >= 0 && n.r < 9 && n.c >= 0 && n.c < 9 && !used[n.r][n.c]) {
-          if (solution[n.r][n.c] > currVal) {
-            nextCandidates.push(n);
-          }
-        }
-      }
-
-      if (nextCandidates.length > 0) {
-        const next = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
-        path.push({ row: next.r, col: next.c });
-        used[next.r][next.c] = true;
-        currR = next.r;
-        currC = next.c;
-      } else {
-        break;
-      }
+      if (nextCandidates.length === 0) break;
+      const next = nextCandidates[Math.floor(Math.random() * nextCandidates.length)];
+      path.push(next);
+      used[next.row][next.col] = true;
+      curr = next;
     }
 
     if (path.length >= 2) {
@@ -301,57 +240,41 @@ function generateArrows(solution: number[][]): Arrow[] {
   const used = Array.from({ length: 9 }, () => Array(9).fill(false));
 
   for (let a = 0; a < 3; a += 1) {
-    let circleR = -1;
-    let circleC = -1;
-    for (let attempt = 0; attempt < 50; attempt += 1) {
-      const r = Math.floor(Math.random() * 8);
-      const c = Math.floor(Math.random() * 8);
-      const val = solution[r][c];
-      if (!used[r][c] && val >= 3) {
-        circleR = r;
-        circleC = c;
-        break;
-      }
-    }
-    if (circleR === -1) continue;
+    // Scan every eligible cell (shuffled) instead of a fixed number of random
+    // guesses, so a valid circle is always found when one exists.
+    const circleCell = shuffledCells(8).find(
+      (cell) => !used[cell.row][cell.col] && solution[cell.row][cell.col] >= 3
+    );
+    if (!circleCell) continue;
 
-    const circleVal = solution[circleR][circleC];
+    const circleVal = solution[circleCell.row][circleCell.col];
     let foundPath: Position[] | null = null;
     const pathUsed = Array.from({ length: 9 }, () => Array(9).fill(false));
-    pathUsed[circleR][circleC] = true;
+    pathUsed[circleCell.row][circleCell.col] = true;
 
-    function dfs(r: number, c: number, currentSum: number, path: Position[]): boolean {
+    function dfs(pos: Position, currentSum: number, path: Position[]): boolean {
       if (currentSum === circleVal) {
         foundPath = [...path];
         return true;
       }
       if (currentSum > circleVal || path.length >= 3) return false;
 
-      const neighbors = [
-        { r: r - 1, c },
-        { r: r + 1, c },
-        { r, c: c - 1 },
-        { r, c: c + 1 },
-      ];
-      for (const n of neighbors) {
-        if (n.r >= 0 && n.r < 9 && n.c >= 0 && n.c < 9 && !used[n.r][n.c] && !pathUsed[n.r][n.c]) {
-          pathUsed[n.r][n.c] = true;
-          const val = solution[n.r][n.c];
-          path.push({ row: n.r, col: n.c });
-          if (dfs(n.r, n.c, currentSum + val, path)) return true;
+      for (const n of orthogonalNeighbors(pos)) {
+        if (!used[n.row][n.col] && !pathUsed[n.row][n.col]) {
+          pathUsed[n.row][n.col] = true;
+          const val = solution[n.row][n.col];
+          path.push(n);
+          if (dfs(n, currentSum + val, path)) return true;
           path.pop();
-          pathUsed[n.r][n.c] = false;
+          pathUsed[n.row][n.col] = false;
         }
       }
       return false;
     }
 
-    if (dfs(circleR, circleC, 0, [])) {
-      arrows.push({
-        circle: { row: circleR, col: circleC },
-        line: foundPath!,
-      });
-      used[circleR][circleC] = true;
+    if (dfs(circleCell, 0, [])) {
+      arrows.push({ circle: circleCell, line: foundPath! });
+      used[circleCell.row][circleCell.col] = true;
       foundPath!.forEach((p) => {
         used[p.row][p.col] = true;
       });
@@ -377,39 +300,22 @@ function generateKillerCages(solution: number[][]): Cage[] {
 
       // Try expanding cage to size 2 or 3
       const targetSize = 2 + Math.floor(Math.random() * 2); // 2 or 3
-      let currR = r;
-      let currC = c;
+      let curr: Position = { row: r, col: c };
 
       for (let step = 1; step < targetSize; step += 1) {
-        const neighbors = [
-          { r: currR - 1, c: currC },
-          { r: currR + 1, c: currC },
-          { r: currR, c: currC - 1 },
-          { r: currR, c: currC + 1 },
-        ];
+        const validNeighbors = orthogonalNeighbors(curr).filter((n) => !visited[n.row][n.col]);
+        if (validNeighbors.length === 0) break;
 
-        const validNeighbors = neighbors.filter(
-          (n) => n.r >= 0 && n.r < 9 && n.c >= 0 && n.c < 9 && !visited[n.r][n.c]
-        );
+        const next = validNeighbors[Math.floor(Math.random() * validNeighbors.length)];
+        // Ensure we don't repeat digits in the same cage
+        const nextVal = solution[next.row][next.col];
+        const hasDigit = cageCells.some((cell) => solution[cell.row][cell.col] === nextVal);
+        if (hasDigit) break;
 
-        if (validNeighbors.length > 0) {
-          const next = validNeighbors[Math.floor(Math.random() * validNeighbors.length)];
-          // Ensure we don't repeat digits in the same cage
-          const nextVal = solution[next.r][next.c];
-          const hasDigit = cageCells.some((cell) => solution[cell.row][cell.col] === nextVal);
-
-          if (!hasDigit) {
-            cageCells.push({ row: next.r, col: next.c });
-            visited[next.r][next.c] = true;
-            targetSum += nextVal;
-            currR = next.r;
-            currC = next.c;
-          } else {
-            break;
-          }
-        } else {
-          break;
-        }
+        cageCells.push(next);
+        visited[next.row][next.col] = true;
+        targetSum += nextVal;
+        curr = next;
       }
 
       cages.push({
@@ -484,13 +390,13 @@ export function generatePuzzle(variant: VariantType, difficulty: Difficulty = 'm
   const targetHoles = holesByDifficulty(difficulty);
   let removed = 0;
 
-  for (const [r, c] of randomCells()) {
+  for (const { row: r, col: c } of shuffledCells()) {
     if (removed >= targetHoles) break;
     const backup = givens[r][c];
     givens[r][c] = 0;
 
     const clone = givens.map((row) => [...row]);
-    const solCount = countSolutions(
+    const { count: solCount, truncated } = countSolutionsDetailed(
       clone,
       variant,
       cages,
@@ -501,7 +407,13 @@ export function generatePuzzle(variant: VariantType, difficulty: Difficulty = 'm
       2
     );
 
-    if (solCount !== 1) {
+    if (truncated) {
+      console.warn(
+        `[sudoku/generator] countSolutions hit its step budget while digging (${variant}, ${difficulty}) at [${r},${c}]; keeping the given to stay safe.`
+      );
+    }
+
+    if (truncated || solCount !== 1) {
       givens[r][c] = backup;
     } else {
       removed += 1;

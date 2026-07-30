@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { validateBoard, isSafeMove } from '../src/engine/validators';
-import { VariantType, Position, Cage, SandwichClues, Arrow } from '../src/types/sudoku';
+import { Position, Cage, SandwichClues, Arrow } from '../src/types/sudoku';
 
 const classicSolved = [
   [5, 3, 4, 6, 7, 8, 9, 1, 2],

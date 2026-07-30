@@ -63,12 +63,12 @@ class PuzzlePool {
     });
   }
 
-  private enqueueBackgroundRefill(variant: VariantType, difficulty: Difficulty): void {
+  private enqueueBackgroundRefill(variant: VariantType, difficulty: Difficulty, attempt = 0): void {
     const key = this.makeKey(variant, difficulty);
     const list = this.pool.get(key) || [];
 
     // Keep up to 2 pre-generated puzzles in pool per (variant, difficulty)
-    if (list.length >= 2 || this.generating.has(key)) return;
+    if (list.length >= 2 || (attempt === 0 && this.generating.has(key))) return;
 
     this.generating.add(key);
 
@@ -78,10 +78,22 @@ class PuzzlePool {
         const current = this.pool.get(key) || [];
         current.push(newPuzzle);
         this.pool.set(key, current);
-      } catch (err) {
-        console.error(`Failed background puzzle generation for ${key}:`, err);
-      } finally {
         this.generating.delete(key);
+      } catch (err) {
+        const maxAttempts = 3;
+        if (attempt + 1 < maxAttempts) {
+          console.warn(
+            `Background puzzle generation for ${key} failed (attempt ${attempt + 1}/${maxAttempts}), retrying:`,
+            err
+          );
+          this.enqueueBackgroundRefill(variant, difficulty, attempt + 1);
+        } else {
+          console.error(
+            `Background puzzle generation for ${key} failed after ${maxAttempts} attempts, giving up for now:`,
+            err
+          );
+          this.generating.delete(key);
+        }
       }
     }, 10);
   }

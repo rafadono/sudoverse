@@ -10,14 +10,14 @@ describe('Generator - generatePuzzle', () => {
     expect(puzzle.solution).toBeDefined();
 
     // Verify that the solution is valid
-    const valResult = validateBoard(puzzle.solution!, 'classic');
+    const valResult = validateBoard(puzzle.solution, 'classic');
     expect(valResult.valid).toBe(true);
 
     // Verify that givens are consistent with the solution
     for (let r = 0; r < 9; r += 1) {
       for (let c = 0; c < 9; c += 1) {
         if (puzzle.givens[r][c] !== 0) {
-          expect(puzzle.givens[r][c]).toBe(puzzle.solution![r][c]);
+          expect(puzzle.givens[r][c]).toBe(puzzle.solution[r][c]);
         }
       }
     }
@@ -27,7 +27,7 @@ describe('Generator - generatePuzzle', () => {
     // 1. Diagonal
     const diag = generatePuzzle('diagonal', 'easy');
     expect(diag.variant).toBe('diagonal');
-    expect(validateBoard(diag.solution!, 'diagonal').valid).toBe(true);
+    expect(validateBoard(diag.solution, 'diagonal').valid).toBe(true);
 
     // 2. Killer
     const killer = generatePuzzle('killer', 'easy');
@@ -36,12 +36,12 @@ describe('Generator - generatePuzzle', () => {
     expect(killer.cages!.length).toBeGreaterThan(0);
     // In killer, givens must traditionally be an empty board
     expect(killer.givens.every((row) => row.every((val) => val === 0))).toBe(true);
-    expect(validateBoard(killer.solution!, 'killer', killer.cages).valid).toBe(true);
+    expect(validateBoard(killer.solution, 'killer', killer.cages).valid).toBe(true);
 
     // 3. Hyper
     const hyper = generatePuzzle('hyper', 'easy');
     expect(hyper.variant).toBe('hyper');
-    expect(validateBoard(hyper.solution!, 'hyper').valid).toBe(true);
+    expect(validateBoard(hyper.solution, 'hyper').valid).toBe(true);
 
     // 4. Jigsaw
     const jigsaw = generatePuzzle('jigsaw', 'easy');
@@ -50,7 +50,7 @@ describe('Generator - generatePuzzle', () => {
     // Validate jigsawRegions dimensions (9x9)
     expect(jigsaw.jigsawRegions!.length).toBe(9);
     expect(jigsaw.jigsawRegions![0].length).toBe(9);
-    expect(validateBoard(jigsaw.solution!, 'jigsaw', undefined, jigsaw.jigsawRegions).valid).toBe(
+    expect(validateBoard(jigsaw.solution, 'jigsaw', undefined, jigsaw.jigsawRegions).valid).toBe(
       true
     );
 
@@ -61,7 +61,7 @@ describe('Generator - generatePuzzle', () => {
     expect(sandwich.sandwichClues!.rowClues.length).toBe(9);
     expect(sandwich.sandwichClues!.colClues.length).toBe(9);
     expect(
-      validateBoard(sandwich.solution!, 'sandwich', undefined, undefined, sandwich.sandwichClues)
+      validateBoard(sandwich.solution, 'sandwich', undefined, undefined, sandwich.sandwichClues)
         .valid
     ).toBe(true);
 
@@ -71,14 +71,8 @@ describe('Generator - generatePuzzle', () => {
     expect(thermo.thermometers).toBeDefined();
     expect(thermo.thermometers!.length).toBeGreaterThan(0);
     expect(
-      validateBoard(
-        thermo.solution!,
-        'thermo',
-        undefined,
-        undefined,
-        undefined,
-        thermo.thermometers
-      ).valid
+      validateBoard(thermo.solution, 'thermo', undefined, undefined, undefined, thermo.thermometers)
+        .valid
     ).toBe(true);
 
     // 7. Arrow
@@ -88,7 +82,7 @@ describe('Generator - generatePuzzle', () => {
     expect(arrow.arrows!.length).toBeGreaterThan(0);
     expect(
       validateBoard(
-        arrow.solution!,
+        arrow.solution,
         'arrow',
         undefined,
         undefined,

@@ -510,6 +510,203 @@ export function validateBoard(
   return { valid: issues.length === 0, issues };
 }
 
+function noDuplicateAmong(
+  cells: Position[],
+  board: number[][],
+  row: number,
+  col: number,
+  value: number
+): boolean {
+  for (const cell of cells) {
+    if (cell.row === row && cell.col === col) continue;
+    if (board[cell.row][cell.col] === value) return false;
+  }
+  return true;
+}
+
+function isSafeBox(board: number[][], row: number, col: number, value: number): boolean {
+  const boxRow = Math.floor(row / BOX);
+  const boxCol = Math.floor(col / BOX);
+  return noDuplicateAmong(boxCells(boxRow, boxCol), board, row, col, value);
+}
+
+function isSafeJigsaw(
+  board: number[][],
+  row: number,
+  col: number,
+  value: number,
+  regions: number[][]
+): boolean {
+  const regionId = regions[row][col];
+  for (let r = 0; r < SIZE; r += 1) {
+    for (let c = 0; c < SIZE; c += 1) {
+      if ((r !== row || c !== col) && regions[r][c] === regionId && board[r][c] === value) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function isSafeDiagonal(board: number[][], row: number, col: number, value: number): boolean {
+  if (row === col && !noDuplicateAmong(diagonalCells(true), board, row, col, value)) return false;
+  if (row + col === SIZE - 1 && !noDuplicateAmong(diagonalCells(false), board, row, col, value)) {
+    return false;
+  }
+  return true;
+}
+
+function isSafeHyper(board: number[][], row: number, col: number, value: number): boolean {
+  for (let i = 0; i < 4; i += 1) {
+    const cells = hyperRegionCells(i);
+    if (cells.some((cell) => cell.row === row && cell.col === col)) {
+      return noDuplicateAmong(cells, board, row, col, value);
+    }
+  }
+  return true;
+}
+
+function isSafeKiller(
+  board: number[][],
+  row: number,
+  col: number,
+  value: number,
+  cages?: Cage[]
+): boolean {
+  if (!cages) return true;
+  const cage = cages.find((cg) => cg.cells.some((cell) => cell.row === row && cell.col === col));
+  if (!cage) return true;
+
+  let sum = value;
+  let complete = true;
+
+  for (const cell of cage.cells) {
+    if (cell.row === row && cell.col === col) continue;
+    const v = board[cell.row][cell.col];
+    if (v === 0) {
+      complete = false;
+      continue;
+    }
+    if (v === value) return false;
+    sum += v;
+  }
+
+  if (sum > cage.targetSum) return false;
+  if (complete && sum !== cage.targetSum) return false;
+  return true;
+}
+
+function isSafeSandwichLine(values: number[], clue: number | null | undefined): boolean {
+  if (clue === null || clue === undefined) return true;
+
+  const idx1 = values.indexOf(1);
+  const idx9 = values.indexOf(9);
+  if (idx1 === -1 || idx9 === -1) return true;
+
+  const start = Math.min(idx1, idx9) + 1;
+  const end = Math.max(idx1, idx9);
+  let sum = 0;
+  let hasZero = false;
+
+  for (let i = start; i < end; i += 1) {
+    sum += values[i];
+    if (values[i] === 0) hasZero = true;
+  }
+
+  if (sum > clue) return false;
+  if (!hasZero && sum !== clue) return false;
+  return true;
+}
+
+function isSafeSandwich(
+  board: number[][],
+  row: number,
+  col: number,
+  value: number,
+  clues?: SandwichClues
+): boolean {
+  if (!clues) return true;
+
+  const rowVals = [...board[row]];
+  rowVals[col] = value;
+  if (!isSafeSandwichLine(rowVals, clues.rowClues[row])) return false;
+
+  const colVals = Array.from({ length: SIZE }, (_, r) => (r === row ? value : board[r][col]));
+  if (!isSafeSandwichLine(colVals, clues.colClues[col])) return false;
+
+  return true;
+}
+
+function isSafeThermo(
+  board: number[][],
+  row: number,
+  col: number,
+  value: number,
+  thermometers?: Position[][]
+): boolean {
+  if (!thermometers) return true;
+
+  for (const thermo of thermometers) {
+    const idx = thermo.findIndex((p) => p.row === row && p.col === col);
+    if (idx === -1) continue;
+
+    if (idx > 0) {
+      const prev = thermo[idx - 1];
+      const prevVal = board[prev.row][prev.col];
+      if (prevVal !== 0 && value <= prevVal) return false;
+    }
+
+    if (idx < thermo.length - 1) {
+      const next = thermo[idx + 1];
+      const nextVal = board[next.row][next.col];
+      if (nextVal !== 0 && nextVal <= value) return false;
+    }
+  }
+
+  return true;
+}
+
+function isSafeArrow(
+  board: number[][],
+  row: number,
+  col: number,
+  value: number,
+  arrows?: Arrow[]
+): boolean {
+  if (!arrows) return true;
+
+  for (const arrow of arrows) {
+    const isCircle = arrow.circle.row === row && arrow.circle.col === col;
+    const isOnLine = arrow.line.some((cell) => cell.row === row && cell.col === col);
+    if (!isCircle && !isOnLine) continue;
+
+    const circleVal = isCircle ? value : board[arrow.circle.row][arrow.circle.col];
+    let sum = 0;
+    let hasZero = false;
+
+    for (const cell of arrow.line) {
+      const v =
+        isOnLine && cell.row === row && cell.col === col ? value : board[cell.row][cell.col];
+      sum += v;
+      if (v === 0) hasZero = true;
+    }
+
+    if (circleVal !== 0) {
+      if (sum > circleVal) return false;
+      if (!hasZero && sum !== circleVal) return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Checks whether placing `value` at (row, col) keeps the board consistent,
+ * assuming the rest of the board is already valid. Only inspects the row,
+ * column, region and variant-specific constraints that touch this cell,
+ * instead of cloning and re-validating the entire 81-cell board — this is
+ * the dominant hot path for the backtracking solver/generator.
+ */
 export function isSafeMove(
   board: number[][],
   row: number,
@@ -521,21 +718,28 @@ export function isSafeMove(
   sandwichClues?: SandwichClues,
   thermometers?: Position[][],
   arrows?: Arrow[],
-  lang: Language = 'en'
+  _lang: Language = 'en'
 ): boolean {
   if (value < 1 || value > 9) return false;
   if (!inBounds(row) || !inBounds(col)) return false;
 
-  const clone = board.map((r) => [...r]);
-  clone[row][col] = value;
-  return validateBoard(
-    clone,
-    variant,
-    cages,
-    jigsawRegions,
-    sandwichClues,
-    thermometers,
-    arrows,
-    lang
-  ).valid;
+  if (!noDuplicateAmong(rowCells(row), board, row, col, value)) return false;
+  if (!noDuplicateAmong(colCells(col), board, row, col, value)) return false;
+
+  if (variant === 'jigsaw' && jigsawRegions) {
+    if (!isSafeJigsaw(board, row, col, value, jigsawRegions)) return false;
+  } else if (!isSafeBox(board, row, col, value)) {
+    return false;
+  }
+
+  if (variant === 'diagonal' && !isSafeDiagonal(board, row, col, value)) return false;
+  if (variant === 'hyper' && !isSafeHyper(board, row, col, value)) return false;
+  if (variant === 'killer' && !isSafeKiller(board, row, col, value, cages)) return false;
+  if (variant === 'sandwich' && !isSafeSandwich(board, row, col, value, sandwichClues)) {
+    return false;
+  }
+  if (variant === 'thermo' && !isSafeThermo(board, row, col, value, thermometers)) return false;
+  if (variant === 'arrow' && !isSafeArrow(board, row, col, value, arrows)) return false;
+
+  return true;
 }
