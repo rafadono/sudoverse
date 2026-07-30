@@ -52,17 +52,29 @@ parts:
       - libayatana-appindicator3-1
       - librsvg2-2
     override-build: |
-      export CARGO_HOME="$CRAFT_PART_BUILD/.cargo"
-      export RUSTUP_HOME="$CRAFT_PART_BUILD/.rustup"
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-      . "$CARGO_HOME/env"
+      # Default (non-part-local) paths on purpose: with SNAPCRAFT_BUILD_ENVIRONMENT=host
+      # this runs directly on the CI runner, so ~/.cargo, ~/.rustup and target/ are
+      # exactly what the workflow's actions/cache step keys on. Guard each heavy
+      # install so a cache hit skips it entirely instead of redoing it every run.
+      export CARGO_HOME="$HOME/.cargo"
+      export RUSTUP_HOME="$HOME/.rustup"
+      export PATH="$CARGO_HOME/bin:$PATH"
 
-      curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-      apt-get install -y nodejs
+      if ! command -v cargo >/dev/null 2>&1; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+      fi
+
+      if ! command -v node >/dev/null 2>&1; then
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+        apt-get install -y nodejs
+      fi
 
       npm ci
       npm run build:web
-      npm --workspace @sudoku/desktop run tauri:build
+      # --no-bundle: the snap only needs the compiled binary, not the
+      # AppImage/deb/rpm bundles Tauri would otherwise also produce (and for
+      # AppImage, download ~300MB of linuxdeploy tooling for).
+      npm --workspace @sudoku/desktop run tauri:build -- --no-bundle
 
       install -Dm755 apps/desktop/src-tauri/target/release/sudoku_desktop \
         "$CRAFT_PART_INSTALL/bin/sudoku_desktop"

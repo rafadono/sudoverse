@@ -10,18 +10,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Desktop app (Tauri/Rust) for Linux (AppImage, .deb, .rpm, Flathub, Snap Store) and Windows (NSIS/MSI, no store).
 - PWA support for the web client (installable, offline-capable via service worker).
+- Puzzle generation runs in a dedicated Web Worker on web/desktop, so it never blocks the main thread.
+- Mobile app reaches feature parity with web/desktop: persistent best times via `AsyncStorage`, the shared `puzzlePoolManager`, a memoized board component, the Calculator helper, a Ko-fi link, and an error boundary.
+- ESLint (flat config, TypeScript + React hooks) wired into CI, alongside typecheck/tests/format.
 - MIT license.
 
 ### Changed
 
 - `isSafeMove` now validates only the row/column/region/variant constraints touching the placed cell instead of re-validating the entire board, drastically speeding up the solver and generator.
-- `SudokuBoard`, `NumberPad`, and `VariantSelector` are memoized to avoid re-rendering the whole board every timer tick.
-- `App.tsx` game logic extracted into `useGameTimer`, `usePuzzleRecord`, and `useKeyboardControls` hooks.
+- `SudokuBoard`, `NumberPad`, and `VariantSelector` (and their mobile equivalents) are memoized to avoid re-rendering the whole board every timer tick.
+- `App.tsx` game logic extracted into `useGameTimer`, `usePuzzleRecord`, and `useKeyboardControls` hooks on both web and mobile.
+- CI (`build-apps.yml`): added Rust/Gradle build caching, switched the Snap build to run on the runner directly (`SNAPCRAFT_BUILD_ENVIRONMENT: host`) instead of a nested LXD container, and dropped Tauri's bundling step there (`--no-bundle`) since the snap only needs the compiled binary — cut a ~35+ minute cold Snap build down significantly.
 
 ### Fixed
 
 - `generatePuzzle` no longer silently produces under-filled boards when the solution-counting search hits its step budget; it now logs and treats the result as unverified.
 - `generateArrows` could occasionally produce zero arrows for the Arrow variant due to a limited random-sampling search; it now scans all eligible cells.
+- `desktop-flatpak` CI job was failing immediately (`xvfb-run: exit code 127`) because flatpak/flatpak-builder/xvfb were never installed on the runner before invoking the build action.
 
 ## [0.1.0] - 2026-06-15
 

@@ -18,10 +18,21 @@ The project is structured as an NPM monorepo with the following architecture:
    - Dynamic and unified generator for all variants and difficulties.
 
 2. **`apps/web`** (React + Vite Web Application)
-   - Responsive, installable PWA. Uses the shared core and SVG vector renderings for overlays.
+   - Responsive, installable PWA (manifest + service worker via `vite-plugin-pwa`).
+   - Puzzle generation runs in a dedicated Web Worker (`src/workers/`) so it never
+     blocks the main thread — this also applies unchanged inside the Tauri
+     desktop shell, since its WebView supports Web Workers like any browser.
+   - Components memoized (`React.memo`) and app logic split into hooks
+     (`src/hooks/`) to avoid re-rendering the board on every timer tick.
 
 3. **`apps/mobile`** (React Native + Expo Mobile Application)
-   - Mobile application compiling natively to Android using the shared rules and logic engine from core, rendering visual inline indicators.
+   - Mobile application compiling natively to Android using the shared rules and
+     logic engine from core.
+   - Mirrors the web client's architecture: a memoized board component
+     (`src/components/`), extracted hooks (`src/hooks/`), the same
+     `puzzlePoolManager` for pre-generated puzzles, and persistent best times
+     via `AsyncStorage` (no Web Worker equivalent — React Native has no
+     browser Worker API).
 
 4. **`apps/desktop`** (Tauri Native Desktop Wrapper)
    - Wraps the built `apps/web` bundle in a Rust/Tauri shell using the OS's system WebView (WebView2 on Windows, WebKitGTK on Linux) instead of bundling a browser.
@@ -42,6 +53,8 @@ We have a series of cross-platform scripts within the `scripts/` directory to fa
 - **`build-android`**: Compiles and generates the release APK file for Android.
 - **`build-desktop`**: Compiles native Tauri bundles for the host OS (AppImage/deb/rpm on Linux, NSIS/MSI on Windows).
 - **`build-all`**: Runs the complete monorepo compilation sequence (web, optionally Android/desktop via `--with-android`/`--with-desktop`).
+- **`lint`** / **`lint:fix`**: Runs ESLint (`eslint.config.js`) across every workspace.
+- **`typecheck`** / **`test`** / **`format`** / **`format:check`**: `tsc --noEmit` per workspace, Vitest, and Prettier, respectively.
 
 Flatpak (`apps/desktop/flatpak/io.github.rafadono.SudoVerse.yml`) and Snap
 (`apps/desktop/snap/snapcraft.yaml`) packages are built independently with
@@ -80,7 +93,40 @@ System installation and configuration scripts are located at:
 
 ---
 
-## 4. Game Variants and Mechanics
+## 4. Continuous Integration (GitHub Actions)
+
+Two workflows run on every push to `main` (and on pull requests, for the first one):
+
+- **`ci.yml`** ("CI Code Quality"): typecheck → lint (ESLint) → tests (Vitest)
+  → on `push`, auto-formats with Prettier and commits the result; on
+  `pull_request`, only checks formatting instead of committing to someone
+  else's branch.
+- **`build-apps.yml`** ("Build Apps"): builds every distributable artifact —
+  `web` (Vite build), `desktop-linux` (AppImage/.deb/.rpm), `desktop-windows`
+  (NSIS/MSI), `desktop-snap` (Snap Store package), `desktop-flatpak` (Flathub
+  package), and `android-apk` (release APK).
+
+### Caching and known limitations
+
+- `desktop-linux`/`desktop-windows` cache the Cargo registry and `target/` via
+  `Swatinem/rust-cache`; `android-apk` caches Gradle via
+  `gradle/actions/setup-gradle`. A cache miss (e.g. after a `Cargo.lock`
+  change) still means a full cold compile.
+- `desktop-snap` builds with `SNAPCRAFT_BUILD_ENVIRONMENT: host` (directly on
+  the runner, skipping snapcraft's default LXD container) and
+  `tauri build --no-bundle` (the snap only needs the compiled binary, not the
+  AppImage/deb/rpm bundles Tauri would otherwise also produce — and download
+  ~300MB of linuxdeploy tooling for), with its own Rust/`target` cache keyed
+  on `Cargo.lock`.
+- `desktop-flatpak` is `continue-on-error: true` and will keep failing until
+  Cargo's dependencies are vendored for flatpak-builder's network-disabled
+  build sandbox — see the TODO comment in
+  `apps/desktop/flatpak/io.github.rafadono.SudoVerse.yml` for the exact
+  one-time command to generate that.
+
+---
+
+## 5. Game Variants and Mechanics
 
 The Sudoku engine natively supports 8 variants:
 
@@ -95,7 +141,7 @@ The Sudoku engine natively supports 8 variants:
 
 ---
 
-## 5. Monetization Strategy
+## 6. Monetization Strategy
 
 Recommended business model: **Freemium**
 
@@ -109,7 +155,7 @@ Recommended business model: **Freemium**
 
 ---
 
-## 6. Procedural Generation Algorithms and High Scores System
+## 7. Procedural Generation Algorithms and High Scores System
 
 To achieve infinite replayability, the project uses mathematical algorithms at runtime:
 
