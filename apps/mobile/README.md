@@ -7,7 +7,7 @@ Native Android application built using **Expo** and **React Native**, sharing th
 - Native performance and gesture cell inputs.
 - Shared TypeScript engine ensuring consistent variant validators.
 - Multi-language support (English/Spanish).
-- Session-based persistence for personal records and times.
+- Persistent personal records and times (AsyncStorage), pre-generated puzzle pool, and a crash-safe error boundary — same reliability features as the web/desktop clients.
 
 ## Running Locally
 
