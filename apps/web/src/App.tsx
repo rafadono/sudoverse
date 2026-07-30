@@ -4,7 +4,7 @@ import {
   Puzzle,
   validateBoard,
   VariantType,
-  generatePuzzle,
+  puzzlePoolManager,
   Difficulty,
   Language,
   getTranslation,
@@ -13,6 +13,7 @@ import {
 import { SudokuBoard } from './components/SudokuBoard';
 import { NumberPad } from './components/NumberPad';
 import { VariantSelector } from './components/VariantSelector';
+import { Calculator } from './components/Calculator';
 
 function deepClone(board: number[][]): number[][] {
   return board.map((row) => [...row]);
@@ -35,7 +36,7 @@ export default function App() {
   const [lang, setLang] = useState<Language>('en');
   const [variant, setVariant] = useState<VariantType>('classic');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [puzzle, setPuzzle] = useState<Puzzle>(() => generatePuzzle('classic', 'medium'));
+  const [puzzle, setPuzzle] = useState<Puzzle>(() => puzzlePoolManager.getPuzzle('classic', 'medium'));
   const [board, setBoard] = useState<number[][]>(() => deepClone(puzzle.givens));
   const [solvedBoard, setSolvedBoard] = useState<number[][] | null>(null);
   const [selected, setSelected] = useState<{ row: number; col: number } | null>(null);
@@ -43,9 +44,15 @@ export default function App() {
   const [isSolved, setIsSolved] = useState(false);
   const [statusState, setStatusState] = useState<StatusState>({ key: 'ready' });
   const [bestTime, setBestTime] = useState<number | null>(null);
+  const [showCalculator, setShowCalculator] = useState(false);
+
+  useEffect(() => {
+    // Pre-warm the pool in background on startup
+    puzzlePoolManager.prewarmPool();
+  }, []);
 
   const loadNewPuzzle = useCallback((v: VariantType, d: Difficulty) => {
-    const p = generatePuzzle(v, d);
+    const p = puzzlePoolManager.getPuzzle(v, d);
     setPuzzle(p);
     setBoard(deepClone(p.givens));
     setSolvedBoard(deepClone(p.solution || []));
@@ -274,6 +281,21 @@ export default function App() {
           <button type="button" onClick={solveCurrent}>
             {getTranslation('solve', lang)}
           </button>
+          <button
+            type="button"
+            className={showCalculator ? 'btn-calc active' : 'btn-calc'}
+            onClick={() => setShowCalculator((prev) => !prev)}
+          >
+            {getTranslation('calculator', lang)}
+          </button>
+          <a
+            href="https://ko-fi.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-kofi"
+          >
+            {getTranslation('supportKofi', lang)}
+          </a>
         </div>
 
         <div className="meta">
@@ -293,20 +315,27 @@ export default function App() {
         </div>
       </section>
 
-      <SudokuBoard
-        board={board}
-        givens={puzzle.givens}
-        selected={selected}
-        cages={variant === 'killer' ? puzzle.cages : undefined}
-        jigsawRegions={variant === 'jigsaw' ? puzzle.jigsawRegions : undefined}
-        sandwichClues={variant === 'sandwich' ? puzzle.sandwichClues : undefined}
-        thermometers={variant === 'thermo' ? puzzle.thermometers : undefined}
-        arrows={variant === 'arrow' ? puzzle.arrows : undefined}
-        conflictSet={conflictSet}
-        onSelect={(row, col) => setSelected({ row, col })}
-      />
+      <div className="game-layout">
+        <div className="board-container">
+          <SudokuBoard
+            board={board}
+            givens={puzzle.givens}
+            selected={selected}
+            cages={variant === 'killer' ? puzzle.cages : undefined}
+            jigsawRegions={variant === 'jigsaw' ? puzzle.jigsawRegions : undefined}
+            sandwichClues={variant === 'sandwich' ? puzzle.sandwichClues : undefined}
+            thermometers={variant === 'thermo' ? puzzle.thermometers : undefined}
+            arrows={variant === 'arrow' ? puzzle.arrows : undefined}
+            conflictSet={conflictSet}
+            onSelect={(row, col) => setSelected({ row, col })}
+          />
+        </div>
 
-      <NumberPad onInput={applyValue} onClear={clearCell} lang={lang} />
+        <aside className="side-panel">
+          <NumberPad onInput={applyValue} onClear={clearCell} lang={lang} />
+          {showCalculator && <Calculator onClose={() => setShowCalculator(false)} lang={lang} />}
+        </aside>
+      </div>
 
       <section className="status">
         <strong>{getTranslation('status', lang)}:</strong> {currentStatusText}

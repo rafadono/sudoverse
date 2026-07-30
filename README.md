@@ -1,31 +1,42 @@
-# SudoVerse
+# SudoVerse 🧩
 
-Unified, multi-platform Sudoku platform with a shared rules and logic engine, available for **Web**, **Android (Mobile)**, and **Desktop (Windows/Linux)**.
+[![Support on Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com)
+[![TypeScript](https://img.shields.io/badge/Language-100%25%20TypeScript-3178c6)](https://www.typescriptlang.org/)
 
-## Key Features
-
-- **Shared Core Engine**: Business logic, solvers, generators, and validators are packed in a single TypeScript package (`@sudoku/core`).
-- **8 Game Variants**: Native support for Classic, Diagonal (X), Killer, Hyper (Windoku), Jigsaw (Irregular), Sandwich, Thermo, and Arrow Sudokus.
-- **Dynamic Internationalization (i18n)**: Full English and Spanish localization, translating UI buttons, labels, and even board diagnostics dynamically.
-- **Cross-Platform**:
-  - **Web Client**: Responsive React + Vite application (configured as a PWA).
-  - **Mobile Client**: Expo + React Native application compiling natively to Android.
-  - **Desktop Client**: Tauri wrapper packaging the web app for native Windows and Linux builds.
+Unified, multi-platform Sudoku game with a shared engine for **Web**, **Mobile (Android)**, and **Linux Ecosystem (Debian, Ubuntu, Fedora, Flathub & Snap Store)**.
 
 ---
 
-## Quick Start
+## 🌟 Key Features
+
+- **Pure TypeScript Monorepo**: 100% written in TypeScript without external complex binary dependencies.
+- **Shared Core Engine**: Core rules, backtracking solver, procedural puzzle generator, and rule validators encapsulated in `@sudoku/core`.
+- **8 Game Variants**: Native support for Classic, Diagonal (X), Killer, Hyper (Windoku), Jigsaw (Irregular), Sandwich, Thermo, and Arrow Sudokus.
+- **Dynamic Internationalization (i18n)**: Full English and Spanish localization, translating UI buttons, status messages, and diagnostics dynamically.
+- **Linux & Cross-Platform Stores Ready**:
+  - **Web Client (PWA)**: Responsive React + Vite application ready for browser install on Debian, Ubuntu, Fedora, Arch, Windows, and macOS.
+  - **Linux Distribution & Stores**: Easily publishable to **Flathub**, **Snap Store**, and Linux package managers via Web/PWA or Electron wrappers (100% TS).
+  - **Mobile Client**: Expo + React Native application compiling natively to Android.
+- **Monetization & Community Support**: Integrated **Ko-fi** button for voluntary donations and community support.
+
+---
+
+## ☕ Support the Project (Ko-fi)
+
+If you enjoy playing SudoVerse and want to support its open-source development, consider buying a coffee on Ko-fi:
+
+👉 **[Support SudoVerse on Ko-fi](https://ko-fi.com)**
+
+---
+
+## 🚀 Quick Start
 
 ### 1. Prerequisites
-
-Ensure you have the following installed:
 
 - **Node.js** v20 or higher
 - **npm** v10 or higher
 
 ### 2. Install Dependencies
-
-Install all monorepo dependencies from the root directory:
 
 ```bash
 npm install
@@ -33,13 +44,13 @@ npm install
 
 ### 3. Run in Development
 
-- **Web App (React + Vite):**
+- **Web App (React + Vite PWA):**
 
   ```bash
   npm run dev:web
   ```
 
-  Open [http://localhost:5173](http://localhost:5173).
+  Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 - **Mobile App (Android/Expo):**
 
@@ -47,28 +58,20 @@ npm install
   npm run dev:mobile
   ```
 
-- **Desktop App (Tauri wrapper):**
-  ```bash
-  npm run dev:desktop
-  ```
-
 ---
 
-## Project Structure
+## 📂 Project Structure
 
-The monorepo is divided into the following workspaces:
-
-- **`packages/core`**: The logic layer (rules validator, recursive backtracking solver, and procedural generator).
+- **`packages/core`**: Logic engine (rules validator, solver, generator, i18n).
 - **`packages/ui`**: Shared UI design components.
-- **`apps/web`**: React-based web client and PWA.
-- **`apps/mobile`**: Expo-based mobile client.
-- **`apps/desktop`**: Tauri desktop client wrapper.
-- **`scripts/`**: Development environment configuration and compiler scripts.
+- **`apps/web`**: React-based Web client & PWA.
+- **`apps/mobile`**: Expo-based mobile client (Android).
+- **`scripts/`**: Monorepo TypeScript automation scripts (`scripts/build.ts`).
 
 ---
 
-## Documentation
+## 📚 Documentation
 
-For technical guides, system configurations, and compilation targets, see:
+For technical guides, system setup, and distribution manuals:
 
 **[Technical Reference Guide (docs/reference.md)](./docs/reference.md)**

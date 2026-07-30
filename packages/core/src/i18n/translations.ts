@@ -46,6 +46,9 @@ export const TRANSLATIONS = {
     selectLanguage: 'Language',
     languageNameEn: 'English',
     languageNameEs: 'Español',
+    supportKofi: '☕ Support on Ko-fi',
+    calculator: '🧮 Calculator',
+    calculatorTitle: 'Helper Calculator',
   },
   es: {
     title: 'SudoVerse',
@@ -92,6 +95,9 @@ export const TRANSLATIONS = {
     selectLanguage: 'Idioma',
     languageNameEn: 'English',
     languageNameEs: 'Español',
+    supportKofi: '☕ Apoyar en Ko-fi',
+    calculator: '🧮 Calculadora',
+    calculatorTitle: 'Calculadora de Ayuda',
   },
 };
 

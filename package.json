@@ -7,16 +7,13 @@
     "apps/*"
   ],
   "scripts": {
-    "bootstrap": "node scripts/build.js bootstrap",
-    "setup:system": "node scripts/build.js setup-system",
+    "bootstrap": "npx tsx scripts/build.ts bootstrap",
+    "setup:system": "npx tsx scripts/build.ts setup-system",
     "dev:web": "npm --workspace @sudoku/web run dev",
-    "build:web": "node scripts/build.js web",
-    "build:desktop": "node scripts/build.js desktop",
-    "build:android": "node scripts/build.js android",
-    "build:flatpak": "node scripts/build.js flatpak",
-    "build:all": "node scripts/build.js all",
+    "build:web": "npx tsx scripts/build.ts web",
+    "build:android": "npx tsx scripts/build.ts android",
+    "build:all": "npx tsx scripts/build.ts all",
     "dev:mobile": "npm --workspace @sudoku/mobile run start",
-    "dev:desktop": "npm --workspace @sudoku/desktop run tauri:dev",
     "typecheck": "npm run -ws typecheck",
     "test": "vitest run",
     "format": "prettier --write .",
@@ -24,6 +21,7 @@
   },
   "devDependencies": {
     "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8"
   }
