@@ -117,6 +117,19 @@ button:hover {
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
 }
 
+.board-loading {
+  width: min(90vw, 560px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  font-weight: 600;
+  color: var(--ink);
+}
+
 .cell {
   position: relative;
   border-style: solid;

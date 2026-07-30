@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Language, getTranslation } from '@sudoku/core';
 
 interface NumberPadProps {
@@ -6,7 +7,7 @@ interface NumberPadProps {
   lang: Language;
 }
 
-export function NumberPad({ onInput, onClear, lang }: NumberPadProps) {
+export const NumberPad = memo(function NumberPad({ onInput, onClear, lang }: NumberPadProps) {
   return (
     <div className="num-pad">
       {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
@@ -19,4 +20,4 @@ export function NumberPad({ onInput, onClear, lang }: NumberPadProps) {
       </button>
     </div>
   );
-}
+});

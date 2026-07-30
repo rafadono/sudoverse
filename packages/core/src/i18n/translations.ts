@@ -49,6 +49,8 @@ export const TRANSLATIONS = {
     supportKofi: '☕ Support on Ko-fi',
     calculator: '🧮 Calculator',
     calculatorTitle: 'Helper Calculator',
+    generatingPuzzle: 'Generating puzzle…',
+    generationFailed: 'Could not generate a puzzle, please try again',
   },
   es: {
     title: 'SudoVerse',
@@ -98,6 +100,8 @@ export const TRANSLATIONS = {
     supportKofi: '☕ Apoyar en Ko-fi',
     calculator: '🧮 Calculadora',
     calculatorTitle: 'Calculadora de Ayuda',
+    generatingPuzzle: 'Generando puzzle…',
+    generationFailed: 'No se pudo generar el puzzle, intenta de nuevo',
   },
 };
 

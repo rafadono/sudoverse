@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { VariantType, Language, getTranslation } from '@sudoku/core';
 
 interface VariantSelectorProps {
@@ -6,7 +7,11 @@ interface VariantSelectorProps {
   lang: Language;
 }
 
-export function VariantSelector({ value, onChange, lang }: VariantSelectorProps) {
+export const VariantSelector = memo(function VariantSelector({
+  value,
+  onChange,
+  lang,
+}: VariantSelectorProps) {
   return (
     <label className="variant-selector">
       {getTranslation('variant', lang)}
@@ -22,4 +27,4 @@ export function VariantSelector({ value, onChange, lang }: VariantSelectorProps)
       </select>
     </label>
   );
-}
+});

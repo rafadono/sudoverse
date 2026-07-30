@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { Arrow, Cage, Position, SandwichClues } from '@sudoku/core';
 
 interface SudokuBoardProps {
@@ -22,12 +23,14 @@ function key(row: number, col: number): string {
 function buildCageMaps(cages?: Cage[]) {
   const firstCellLabel = new Map<string, string>();
   const cageColor = new Map<string, string>();
+  const cellCage = new Map<string, Cage>();
 
-  if (!cages) return { firstCellLabel, cageColor };
+  if (!cages) return { firstCellLabel, cageColor, cellCage };
 
   cages.forEach((cage, index) => {
     const color = cagePalette[index % cagePalette.length];
     cageColor.set(cage.id, color);
+    cage.cells.forEach((cell) => cellCage.set(key(cell.row, cell.col), cage));
 
     if (cage.cells.length > 0) {
       const first = cage.cells[0];
@@ -35,11 +38,7 @@ function buildCageMaps(cages?: Cage[]) {
     }
   });
 
-  return { firstCellLabel, cageColor };
-}
-
-function findCage(cages: Cage[] | undefined, row: number, col: number): Cage | undefined {
-  return cages?.find((cage) => cage.cells.some((cell) => cell.row === row && cell.col === col));
+  return { firstCellLabel, cageColor, cellCage };
 }
 
 function isHyperCell(row: number, col: number): boolean {
@@ -54,7 +53,7 @@ function cellCenterPercent(pos: Position): { x: string; y: string } {
   return { x, y };
 }
 
-export function SudokuBoard({
+export const SudokuBoard = memo(function SudokuBoard({
   board,
   givens,
   selected,
@@ -66,7 +65,7 @@ export function SudokuBoard({
   conflictSet,
   onSelect,
 }: SudokuBoardProps) {
-  const { firstCellLabel, cageColor } = buildCageMaps(cages);
+  const { firstCellLabel, cageColor, cellCage } = useMemo(() => buildCageMaps(cages), [cages]);
 
   const boardEl = (
     <div className="board-wrapper" style={{ position: 'relative' }}>
@@ -76,7 +75,7 @@ export function SudokuBoard({
             const isGiven = givens[row][col] !== 0;
             const isSelected = selected?.row === row && selected?.col === col;
             const isConflict = conflictSet.has(key(row, col));
-            const cage = findCage(cages, row, col);
+            const cage = cellCage.get(key(row, col));
             const label = firstCellLabel.get(key(row, col));
             const isHyper = isHyperCell(row, col);
 
@@ -274,4 +273,4 @@ export function SudokuBoard({
   }
 
   return boardEl;
-}
+});

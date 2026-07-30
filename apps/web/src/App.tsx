@@ -4,7 +4,6 @@ import {
   Puzzle,
   validateBoard,
   VariantType,
-  puzzlePoolManager,
   Difficulty,
   Language,
   getTranslation,
@@ -14,6 +13,10 @@ import { SudokuBoard } from './components/SudokuBoard';
 import { NumberPad } from './components/NumberPad';
 import { VariantSelector } from './components/VariantSelector';
 import { Calculator } from './components/Calculator';
+import { useGameTimer } from './hooks/useGameTimer';
+import { usePuzzleRecord } from './hooks/usePuzzleRecord';
+import { useKeyboardControls } from './hooks/useKeyboardControls';
+import { puzzleWorkerClient } from './workers/puzzleWorkerClient';
 
 function deepClone(board: number[][]): number[][] {
   return board.map((row) => [...row]);
@@ -27,6 +30,11 @@ function cellKey(row: number, col: number): string {
   return `${row}-${col}`;
 }
 
+function emptyPuzzlePlaceholder(): Puzzle {
+  const blank = Array.from({ length: 9 }, () => Array(9).fill(0));
+  return { id: 'placeholder', variant: 'classic', givens: blank, solution: blank };
+}
+
 type StatusState = {
   key: keyof typeof TRANSLATIONS.en;
   param?: string;
@@ -36,47 +44,56 @@ export default function App() {
   const [lang, setLang] = useState<Language>('en');
   const [variant, setVariant] = useState<VariantType>('classic');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [puzzle, setPuzzle] = useState<Puzzle>(() =>
-    puzzlePoolManager.getPuzzle('classic', 'medium')
-  );
+  const [puzzle, setPuzzle] = useState<Puzzle>(emptyPuzzlePlaceholder);
   const [board, setBoard] = useState<number[][]>(() => deepClone(puzzle.givens));
   const [solvedBoard, setSolvedBoard] = useState<number[][] | null>(null);
   const [selected, setSelected] = useState<{ row: number; col: number } | null>(null);
-  const [seconds, setSeconds] = useState(0);
   const [isSolved, setIsSolved] = useState(false);
   const [statusState, setStatusState] = useState<StatusState>({ key: 'ready' });
-  const [bestTime, setBestTime] = useState<number | null>(null);
   const [showCalculator, setShowCalculator] = useState(false);
+  // Starts true: the mount effect immediately requests the first puzzle from
+  // the worker, so the placeholder board above is never actually painted.
+  const [isGeneratingPuzzle, setIsGeneratingPuzzle] = useState(true);
+
+  const { seconds, resetSeconds } = useGameTimer(isSolved);
+  const { bestTime, loadRecord, saveRecordIfBest } = usePuzzleRecord();
 
   useEffect(() => {
-    // Pre-warm the pool in background on startup
-    puzzlePoolManager.prewarmPool();
+    // Pre-warm the worker's pool in background on startup
+    puzzleWorkerClient.prewarm();
   }, []);
 
-  const loadNewPuzzle = useCallback((v: VariantType, d: Difficulty) => {
-    const p = puzzlePoolManager.getPuzzle(v, d);
-    setPuzzle(p);
-    setBoard(deepClone(p.givens));
-    setSolvedBoard(deepClone(p.solution || []));
-    setSelected(null);
-    setSeconds(0);
-    setIsSolved(false);
-    setStatusState({ key: 'readyToPlay' });
-
-    const key = `sudoku-record-${v}-${d}`;
-    const saved = localStorage.getItem(key);
-    setBestTime(saved ? Number(saved) : null);
-  }, []);
+  const loadNewPuzzle = useCallback(
+    (v: VariantType, d: Difficulty) => {
+      setIsGeneratingPuzzle(true);
+      // Generation runs in a Web Worker so it never blocks the main thread,
+      // even for the slower variants (e.g. Jigsaw) or a pool cache-miss.
+      puzzleWorkerClient
+        .getPuzzle(v, d)
+        .then((p) => {
+          setPuzzle(p);
+          setBoard(deepClone(p.givens));
+          setSolvedBoard(deepClone(p.solution));
+          setSelected(null);
+          resetSeconds();
+          setIsSolved(false);
+          setStatusState({ key: 'readyToPlay' });
+          loadRecord(v, d);
+        })
+        .catch((err) => {
+          console.error('Failed to generate puzzle:', err);
+          setStatusState({ key: 'generationFailed' });
+        })
+        .finally(() => {
+          setIsGeneratingPuzzle(false);
+        });
+    },
+    [resetSeconds, loadRecord]
+  );
 
   useEffect(() => {
     loadNewPuzzle(variant, difficulty);
   }, [variant, difficulty, loadNewPuzzle]);
-
-  useEffect(() => {
-    if (isSolved) return;
-    const id = window.setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => window.clearInterval(id);
-  }, [isSolved]);
 
   const applyValue = useCallback(
     (value: number) => {
@@ -124,31 +141,13 @@ export default function App() {
     setStatusState({ key: 'cellCleared' });
   }, [selected, puzzle, isSolved]);
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (!selected || isSolved) return;
-      if (event.key >= '1' && event.key <= '9') {
-        event.preventDefault();
-        applyValue(Number(event.key));
-      }
-      if (event.key === 'Backspace' || event.key === 'Delete' || event.key === '0') {
-        event.preventDefault();
-        clearCell();
-      }
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-        event.preventDefault();
-        const dRow = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
-        const dCol = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0;
-        setSelected({
-          row: Math.min(8, Math.max(0, selected.row + dRow)),
-          col: Math.min(8, Math.max(0, selected.col + dCol)),
-        });
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selected, applyValue, clearCell, isSolved]);
+  useKeyboardControls({
+    selected,
+    isSolved,
+    onDigit: applyValue,
+    onClear: clearCell,
+    onMove: setSelected,
+  });
 
   const validation = useMemo(
     () =>
@@ -176,22 +175,23 @@ export default function App() {
   useEffect(() => {
     if (boardComplete(board) && validation.valid && !isSolved) {
       setIsSolved(true);
-      const key = `sudoku-record-${variant}-${difficulty}`;
-      const currentBest = localStorage.getItem(key);
-      if (!currentBest || seconds < Number(currentBest)) {
-        localStorage.setItem(key, String(seconds));
-        setBestTime(seconds);
-        setStatusState({ key: 'newRecord', param: String(seconds) });
-      } else {
-        setStatusState({ key: 'solvedCorrectly', param: String(seconds) });
-      }
+      const isNewRecord = saveRecordIfBest(variant, difficulty, seconds);
+      setStatusState(
+        isNewRecord
+          ? { key: 'newRecord', param: String(seconds) }
+          : { key: 'solvedCorrectly', param: String(seconds) }
+      );
     }
-  }, [board, validation.valid, variant, difficulty, seconds, isSolved]);
+  }, [board, validation.valid, variant, difficulty, seconds, isSolved, saveRecordIfBest]);
+
+  const onSelectCell = useCallback((row: number, col: number) => {
+    setSelected({ row, col });
+  }, []);
 
   const resetBoard = () => {
     setBoard(deepClone(puzzle.givens));
     setSelected(null);
-    setSeconds(0);
+    resetSeconds();
     setIsSolved(false);
     setStatusState({ key: 'boardReset' });
   };
@@ -271,7 +271,11 @@ export default function App() {
         </div>
 
         <div className="buttons">
-          <button type="button" onClick={() => loadNewPuzzle(variant, difficulty)}>
+          <button
+            type="button"
+            disabled={isGeneratingPuzzle}
+            onClick={() => loadNewPuzzle(variant, difficulty)}
+          >
             {getTranslation('newGame', lang)}
           </button>
           <button type="button" onClick={resetBoard}>
@@ -319,18 +323,24 @@ export default function App() {
 
       <div className="game-layout">
         <div className="board-container">
-          <SudokuBoard
-            board={board}
-            givens={puzzle.givens}
-            selected={selected}
-            cages={variant === 'killer' ? puzzle.cages : undefined}
-            jigsawRegions={variant === 'jigsaw' ? puzzle.jigsawRegions : undefined}
-            sandwichClues={variant === 'sandwich' ? puzzle.sandwichClues : undefined}
-            thermometers={variant === 'thermo' ? puzzle.thermometers : undefined}
-            arrows={variant === 'arrow' ? puzzle.arrows : undefined}
-            conflictSet={conflictSet}
-            onSelect={(row, col) => setSelected({ row, col })}
-          />
+          {isGeneratingPuzzle ? (
+            <div className="board-loading" role="status" aria-live="polite">
+              {getTranslation('generatingPuzzle', lang)}
+            </div>
+          ) : (
+            <SudokuBoard
+              board={board}
+              givens={puzzle.givens}
+              selected={selected}
+              cages={variant === 'killer' ? puzzle.cages : undefined}
+              jigsawRegions={variant === 'jigsaw' ? puzzle.jigsawRegions : undefined}
+              sandwichClues={variant === 'sandwich' ? puzzle.sandwichClues : undefined}
+              thermometers={variant === 'thermo' ? puzzle.thermometers : undefined}
+              arrows={variant === 'arrow' ? puzzle.arrows : undefined}
+              conflictSet={conflictSet}
+              onSelect={onSelectCell}
+            />
+          )}
         </div>
 
         <aside className="side-panel">
@@ -339,7 +349,7 @@ export default function App() {
         </aside>
       </div>
 
-      <section className="status">
+      <section className="status" aria-live="polite" role="status">
         <strong>{getTranslation('status', lang)}:</strong> {currentStatusText}
       </section>
     </main>
