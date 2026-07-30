@@ -118,6 +118,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder xvfb
           sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+      - name: Allow unattended flatpak system installs (polkit)
+        # Without this, `flatpak-builder --install-deps-from` fails installing
+        # the Sdk/runtime with "Flatpak system operation Deploy not allowed
+        # for user" — there's no polkit authentication agent in this headless
+        # runner to interactively approve the system-wide install.
+        run: |
+          sudo mkdir -p /etc/polkit-1/rules.d
+          echo 'polkit.addRule(function(action, subject) {
+              if (action.id.indexOf("org.freedesktop.Flatpak.") == 0) {
+                  return polkit.Result.YES;
+              }
+          });' | sudo tee /etc/polkit-1/rules.d/49-nopasswd-flatpak.rules
+          sudo systemctl restart polkit
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: sudoverse.flatpak
