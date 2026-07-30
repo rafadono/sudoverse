@@ -77,17 +77,23 @@ jobs:
     env:
       # Build directly on the (already ephemeral/sandboxed) runner instead of
       # inside a nested LXD container: skips container provisioning entirely
-      # and makes the cache step below actually effective across runs.
+      # and lets the part's override-build see the toolchains installed below.
       SNAPCRAFT_BUILD_ENVIRONMENT: host
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      # Installed here (not inside the part's override-build) so they use the
+      # same fast, cached GitHub Actions toolchains as every other job instead
+      # of a manual `curl | sh` rustup/nodesource install — that alone was the
+      # biggest chunk of this job's time. With SNAPCRAFT_BUILD_ENVIRONMENT=host
+      # the part build shares this same PATH, so its `command -v cargo`/`node`
+      # guards find these and skip the slow manual install entirely.
+      - uses: actions/setup-node@v4
         with:
-          path: |
-            ~/.cargo
-            ~/.rustup
-            apps/desktop/src-tauri/target
-          key: snap-rust-${{ hashFiles('apps/desktop/src-tauri/Cargo.lock') }}
+          node-version: 20
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
       - uses: snapcore/action-build@v1
         id: snapcraft
         with:
