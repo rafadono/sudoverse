@@ -17,17 +17,17 @@ The project is structured as an NPM monorepo with the following architecture:
    - Optimized recursive backtracking solver.
    - Dynamic and unified generator for all variants and difficulties.
 
-2. **`packages/ui`** (Shared UI)
-   - Designed to house reusable UI/design components.
+2. **`apps/web`** (React + Vite Web Application)
+   - Responsive, installable PWA. Uses the shared core and SVG vector renderings for overlays.
 
-3. **`apps/web`** (React + Vite Web Application)
-   - Responsive web application optimized for desktop and mobile. Uses the shared core and SVG vector renderings for overlays.
-
-4. **`apps/mobile`** (React Native + Expo Mobile Application)
+3. **`apps/mobile`** (React Native + Expo Mobile Application)
    - Mobile application compiling natively to Android using the shared rules and logic engine from core, rendering visual inline indicators.
 
-5. **`apps/desktop`** (Tauri Wrapper Desktop Application)
-   - Packages the `apps/web` frontend using Rust and Tauri WebView2/WebKitGTK.
+4. **`apps/desktop`** (Tauri Native Desktop Wrapper)
+   - Wraps the built `apps/web` bundle in a Rust/Tauri shell using the OS's system WebView (WebView2 on Windows, WebKitGTK on Linux) instead of bundling a browser.
+   - `src-tauri/`: Rust project + `tauri.conf.json` (window, bundle targets: AppImage/deb/rpm/NSIS/MSI).
+   - `flatpak/`: Flathub manifest, desktop entry, and AppStream metainfo.
+   - `snap/`: Snapcraft manifest for the Snap Store.
 
 ---
 
@@ -39,10 +39,13 @@ We have a series of cross-platform scripts within the `scripts/` directory to fa
 
 - **`bootstrap`**: Configures the environment and installs monorepo dependencies (`npm install`).
 - **`build-web`**: Compiles the responsive web application (`apps/web/dist`).
-- **`build-desktop`**: Compiles native desktop packages (Tauri) for Linux or Windows based on the host operating system.
 - **`build-android`**: Compiles and generates the release APK file for Android.
-- **`build-flatpak`**: Packages and installs the desktop application in Flatpak format.
-- **`build-all`**: Runs the complete monorepo compilation sequence.
+- **`build-desktop`**: Compiles native Tauri bundles for the host OS (AppImage/deb/rpm on Linux, NSIS/MSI on Windows).
+- **`build-all`**: Runs the complete monorepo compilation sequence (web, optionally Android/desktop via `--with-android`/`--with-desktop`).
+
+Flatpak (`apps/desktop/flatpak/io.github.rafadono.SudoVerse.yml`) and Snap
+(`apps/desktop/snap/snapcraft.yaml`) packages are built independently with
+`flatpak-builder` / `snapcraft` respectively — see `apps/desktop/README.md`.
 
 ### Quick Commands (NPM)
 
@@ -50,14 +53,19 @@ We have a series of cross-platform scripts within the `scripts/` directory to fa
 | :----------------------- | :---------------------- | :---------------------- |
 | **Install Dependencies** | `npm run bootstrap`     | `npm run bootstrap`     |
 | **Compile Web**          | `npm run build:web`     | `npm run build:web`     |
-| **Compile Desktop**      | `npm run build:desktop` | `npm run build:desktop` |
 | **Compile Android**      | `npm run build:android` | `npm run build:android` |
-| **Compile Flatpak**      | `npm run build:flatpak` | `npm run build:flatpak` |
+| **Compile Desktop**      | `npm run build:desktop` | `npm run build:desktop` |
 | **Compile All**          | `npm run build:all`     | `npm run build:all`     |
 
 ---
 
 ## 3. Development Environment Configuration
+
+`npm run setup:system` installs, per host OS, everything needed to build every
+target including the Tauri desktop app: Node.js, the Rust toolchain, Android
+SDK/JDK, and native Tauri build dependencies (WebKitGTK + friends on Linux via
+`flatpak`/`flatpak-builder`/`snap`; WebView2 Runtime + Visual Studio Build
+Tools on Windows).
 
 System installation and configuration scripts are located at:
 
@@ -99,9 +107,6 @@ Recommended business model: **Freemium**
 2. **Web Platform (PWA):**
    - Stripe for monthly/annual Premium subscriptions providing coaching and advanced statistics.
 
-3. **Desktop Platform (Steam / Itch.io):**
-   - One-time premium purchase (no ads by default) with themed DLCs and advanced variants.
-
 ---
 
 ## 6. Procedural Generation Algorithms and High Scores System
@@ -128,4 +133,4 @@ To achieve infinite replayability, the project uses mathematical algorithms at r
 ### High Scores System (Best Times)
 
 - **Web App:** Persistent storage in the browser using `localStorage` with the naming scheme `sudoku-record-${variant}-${difficulty}`. Upon solving a board without conflicts, the timer stops and compares the time in seconds. If it is lower than the previous record, it updates in memory and disk, displaying a **New personal record** badge.
-- **Mobile App:** Maintains a persistent cache in memory per session, displaying the best times achieved by the user on the mobile board based on the selected variant and difficulty level.
+- **Mobile App:** Persistent storage on-device via `AsyncStorage` with the same naming scheme `sudoku-record-${variant}-${difficulty}`, displaying the best times achieved by the user based on the selected variant and difficulty level.

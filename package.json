@@ -2,6 +2,27 @@
   "name": "sudoverse",
   "private": true,
   "version": "0.2.0",
+  "type": "module",
+  "description": "Unified, multi-platform Sudoku game with a shared TypeScript engine for Web, Mobile, and Desktop.",
+  "license": "MIT",
+  "author": "rafadono",
+  "homepage": "https://github.com/rafadono/sudoverse",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rafadono/sudoverse.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rafadono/sudoverse/issues"
+  },
+  "keywords": [
+    "sudoku",
+    "game",
+    "puzzle",
+    "typescript",
+    "react",
+    "tauri",
+    "pwa"
+  ],
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -12,17 +33,26 @@
     "dev:web": "npm --workspace @sudoku/web run dev",
     "build:web": "npx tsx scripts/build.ts web",
     "build:android": "npx tsx scripts/build.ts android",
+    "build:desktop": "npx tsx scripts/build.ts desktop",
     "build:all": "npx tsx scripts/build.ts all",
     "dev:mobile": "npm --workspace @sudoku/mobile run start",
+    "dev:desktop": "npm --workspace @sudoku/desktop run tauri:dev",
     "typecheck": "npm run -ws typecheck",
     "test": "vitest run",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^15.15.0",
     "prettier": "^3.3.3",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
+    "typescript-eslint": "^8.65.0",
     "vitest": "^2.1.8"
   }
 }

@@ -26,16 +26,25 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Run Typechecks
+        run: npm run typecheck
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Run Tests
+        run: npm run test
+
       - name: Run Auto-Formatting (Prettier)
+        if: github.event_name == 'push'
         run: npm run format
 
       - name: Commit Formatting Corrections
+        if: github.event_name == 'push'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style: auto-format code with Prettier'
 
-      - name: Run Typechecks
-        run: npm run typecheck
-
-      - name: Run Tests
-        run: npm run test
+      - name: Check Formatting
+        if: github.event_name == 'pull_request'
+        run: npm run format:check
