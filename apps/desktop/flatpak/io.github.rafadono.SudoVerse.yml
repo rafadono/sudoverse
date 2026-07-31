@@ -16,12 +16,19 @@
 # `--share=network`, and switch `npm ci` to an npm mirror/offline cache (npm
 # has no first-party vendoring equivalent to Cargo's).
 app-id: io.github.rafadono.SudoVerse
-runtime: org.freedesktop.Platform
-runtime-version: '24.08'
-sdk: org.freedesktop.Sdk
+# org.gnome.Platform, not the bare org.freedesktop.Platform: the previous
+# attempt failed compiling wry/tauri's webkit2gtk bindings with "Package
+# javascriptcoregtk-4.1 not found" — that's part of WebKitGTK, which the
+# bare Freedesktop runtime doesn't ship but the GNOME one does (it's the
+# standard base for Tauri/Electron-style apps on Flathub for this reason).
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.node20
-  - org.freedesktop.Sdk.Extension.rust-stable
+  # //24.08: freedesktop-sdk extensions are branched by the freedesktop-sdk
+  # release GNOME 47 is built on, not GNOME's own version number.
+  - org.freedesktop.Sdk.Extension.node20//24.08
+  - org.freedesktop.Sdk.Extension.rust-stable//24.08
 command: sudoverse
 
 finish-args:
