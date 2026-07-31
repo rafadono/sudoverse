@@ -22,16 +22,20 @@ app-id: io.github.rafadono.SudoVerse
 # bare Freedesktop runtime doesn't ship but the GNOME one does (it's the
 # standard base for Tauri/Electron-style apps on Flathub for this reason).
 runtime: org.gnome.Platform
-# 47 turned out EOL since Oct 2025 ("Unknown extension ...//24.08" — the
-# extension branch didn't even resolve because 47 pairs with freedesktop-sdk
-# 24.08, and neither node20 nor rust-stable still publish that branch). 50 is
-# GNOME's current non-EOL runtime; node20/rust-stable's current active
-# branch is freedesktop-sdk 25.08, which lines up with it.
+# 47 was EOL (fixed by bumping to 50, the current non-EOL runtime). Explicitly
+# forcing a //branch on the extensions below (first //24.08, then //25.08 to
+# match) was the wrong move on top of that: "Unknown extension ...//25.08 in
+# runtime" even though that branch exists standalone on Flathub — GNOME's Sdk
+# declares its own extension-point versions, which a manual override doesn't
+# match. Leaving the branch unspecified (like the very first, pre-GNOME
+# attempt, which resolved node20/rust-stable against org.freedesktop.Sdk
+# fine) lets flatpak-builder resolve them the way the runtime actually
+# expects instead of guessing a version number.
 runtime-version: '50'
 sdk: org.gnome.Sdk
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.node20//25.08
-  - org.freedesktop.Sdk.Extension.rust-stable//25.08
+  - org.freedesktop.Sdk.Extension.node20
+  - org.freedesktop.Sdk.Extension.rust-stable
 command: sudoverse
 
 finish-args:
