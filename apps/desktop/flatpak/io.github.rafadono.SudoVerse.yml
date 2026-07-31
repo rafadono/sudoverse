@@ -22,13 +22,16 @@ app-id: io.github.rafadono.SudoVerse
 # bare Freedesktop runtime doesn't ship but the GNOME one does (it's the
 # standard base for Tauri/Electron-style apps on Flathub for this reason).
 runtime: org.gnome.Platform
-runtime-version: '47'
+# 47 turned out EOL since Oct 2025 ("Unknown extension ...//24.08" — the
+# extension branch didn't even resolve because 47 pairs with freedesktop-sdk
+# 24.08, and neither node20 nor rust-stable still publish that branch). 50 is
+# GNOME's current non-EOL runtime; node20/rust-stable's current active
+# branch is freedesktop-sdk 25.08, which lines up with it.
+runtime-version: '50'
 sdk: org.gnome.Sdk
 sdk-extensions:
-  # //24.08: freedesktop-sdk extensions are branched by the freedesktop-sdk
-  # release GNOME 47 is built on, not GNOME's own version number.
-  - org.freedesktop.Sdk.Extension.node20//24.08
-  - org.freedesktop.Sdk.Extension.rust-stable//24.08
+  - org.freedesktop.Sdk.Extension.node20//25.08
+  - org.freedesktop.Sdk.Extension.rust-stable//25.08
 command: sudoverse
 
 finish-args:
