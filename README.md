@@ -38,7 +38,7 @@ If you enjoy playing SudoVerse and want to support its open-source development, 
 
 ### 1. Prerequisites
 
-- **Node.js** v20 or higher
+- **Node.js** v22 or higher (v20 reached end-of-life; CI builds with 22)
 - **npm** v10 or higher
 
 ### 2. Install Dependencies
