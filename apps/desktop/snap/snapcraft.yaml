@@ -1,11 +1,20 @@
 # Snap Store manifest for SudoVerse.
 #
-# Unlike Flathub/flatpak-builder, Snapcraft's build farm allows network access
-# during the build, so `cargo`/`npm` can fetch dependencies directly — no
-# vendoring step needed here (see ../flatpak/*.yml for the Flatpak caveat).
+# This part does NOT compile anything — it just packages an already-built
+# binary. Snapcraft copies `source:` into its own isolated part-build
+# directory before packaging, so pointing it at the Cargo project and
+# compiling in `override-build` (the previous approach) meant the Rust
+# build cache the CI workflow sets up could never actually be reused: the
+# compiler was writing into that copied path, not the cached one. The
+# workflow now builds apps/desktop/src-tauri/target/release/sudoku_desktop
+# as a normal step (reusing the same cached toolchain/target dir as the
+# desktop-linux job) and stages just the binary at snap/stage-bin/bin/
+# before calling snapcraft — see .github/workflows/build-apps.yml.
 #
-# Build locally with: cd apps/desktop/snap && snapcraft
-# Publish with:       snapcraft login && snapcraft upload *.snap
+# Build locally: npm --workspace @sudoku/desktop run tauri:build -- --no-bundle
+#                mkdir -p stage-bin/bin && cp ../src-tauri/target/release/sudoku_desktop stage-bin/bin/sudoverse
+#                cd apps/desktop/snap && snapcraft
+# Publish with:  snapcraft login && snapcraft upload *.snap
 name: sudoverse
 version: '0.2.0'
 summary: Unified, multi-platform Sudoku game with 8 variants
@@ -22,7 +31,7 @@ license: MIT
 
 apps:
   sudoverse:
-    command: bin/sudoku_desktop
+    command: bin/sudoverse
     plugs:
       - network
       - opengl
@@ -36,45 +45,9 @@ apps:
 
 parts:
   sudoverse:
-    plugin: nil
-    source: ../../..
-    build-packages:
-      - curl
-      - build-essential
-      - libwebkit2gtk-4.1-dev
-      - libssl-dev
-      - libayatana-appindicator3-dev
-      - librsvg2-dev
-      - libxdo-dev
-      - file
+    plugin: dump
+    source: stage-bin
     stage-packages:
       - libwebkit2gtk-4.1-0
       - libayatana-appindicator3-1
       - librsvg2-2
-    override-build: |
-      # Default (non-part-local) paths on purpose: with SNAPCRAFT_BUILD_ENVIRONMENT=host
-      # this runs directly on the CI runner, so ~/.cargo, ~/.rustup and target/ are
-      # exactly what the workflow's actions/cache step keys on. Guard each heavy
-      # install so a cache hit skips it entirely instead of redoing it every run.
-      export CARGO_HOME="$HOME/.cargo"
-      export RUSTUP_HOME="$HOME/.rustup"
-      export PATH="$CARGO_HOME/bin:$PATH"
-
-      if ! command -v cargo >/dev/null 2>&1; then
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-      fi
-
-      if ! command -v node >/dev/null 2>&1; then
-        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-        apt-get install -y nodejs
-      fi
-
-      npm ci
-      npm run build:web
-      # --no-bundle: the snap only needs the compiled binary, not the
-      # AppImage/deb/rpm bundles Tauri would otherwise also produce (and for
-      # AppImage, download ~300MB of linuxdeploy tooling for).
-      npm --workspace @sudoku/desktop run tauri:build -- --no-bundle
-
-      install -Dm755 apps/desktop/src-tauri/target/release/sudoku_desktop \
-        "$CRAFT_PART_INSTALL/bin/sudoku_desktop"

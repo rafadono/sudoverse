@@ -41,7 +41,10 @@ modules:
     build-commands:
       - npm ci
       - npm run build:web
-      - npm --workspace @sudoku/desktop run tauri:build
+      # --no-bundle: this package only needs the compiled binary, not the
+      # AppImage/deb/rpm bundles Tauri would otherwise also produce (and for
+      # AppImage, download ~300MB of linuxdeploy tooling for).
+      - npm --workspace @sudoku/desktop run tauri:build -- --no-bundle
       - install -Dm755 apps/desktop/src-tauri/target/release/sudoku_desktop /app/bin/sudoverse
       - install -Dm644 apps/desktop/flatpak/io.github.rafadono.SudoVerse.desktop
         /app/share/applications/io.github.rafadono.SudoVerse.desktop

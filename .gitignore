@@ -24,6 +24,9 @@ apps/mobile/ios/
 apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/gen/
 
+# Snap (staged binary produced by CI before invoking snapcraft)
+apps/desktop/snap/stage-bin/
+
 # Local env files
 .env
 .env.local

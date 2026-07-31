@@ -81,26 +81,32 @@ jobs:
   desktop-snap:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      # Build directly on the (already ephemeral/sandboxed) runner instead of
-      # inside a nested LXD container: skips container provisioning entirely
-      # and lets the part's override-build see the toolchains installed below.
-      SNAPCRAFT_BUILD_ENVIRONMENT: host
     steps:
       - uses: actions/checkout@v4
-      # Installed here (not inside the part's override-build) so they use the
-      # same fast, cached GitHub Actions toolchains as every other job instead
-      # of a manual `curl | sh` rustup/nodesource install — that alone was the
-      # biggest chunk of this job's time. With SNAPCRAFT_BUILD_ENVIRONMENT=host
-      # the part build shares this same PATH, so its `command -v cargo`/`node`
-      # guards find these and skip the slow manual install entirely.
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri
+      - run: sudo apt update
+      - run: sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - run: npm install
+      - run: npm run build:web
+      # Build the binary here, as a normal cached step (same as desktop-linux),
+      # instead of inside snapcraft's override-build: snapcraft copies its
+      # `source:` into an isolated part-build directory before compiling, so a
+      # cache keyed on this checkout's target/ was never actually reused there
+      # — every snap build was a full cold recompile and kept hitting the job
+      # timeout. --no-bundle skips appimage/deb/rpm packaging, which the snap
+      # doesn't need.
+      - run: npm --workspace @sudoku/desktop run tauri:build -- --no-bundle
+      - name: Stage the binary for snapcraft
+        run: |
+          mkdir -p apps/desktop/snap/stage-bin/bin
+          cp apps/desktop/src-tauri/target/release/sudoku_desktop apps/desktop/snap/stage-bin/bin/sudoverse
       - uses: snapcore/action-build@v1
         id: snapcraft
         with:
@@ -142,7 +148,10 @@ jobs:
         with:
           bundle: sudoverse.flatpak
           manifest-path: apps/desktop/flatpak/io.github.rafadono.SudoVerse.yml
-          cache-key: flatpak-builder-${{ github.sha }}
+          # Keyed on the manifest + lockfile, not github.sha: the previous key
+          # changed on every push, so the cache (meant to skip re-fetching the
+          # Sdk/Platform runtimes) never actually hit.
+          cache-key: flatpak-builder-${{ hashFiles('apps/desktop/flatpak/io.github.rafadono.SudoVerse.yml', 'apps/desktop/src-tauri/Cargo.lock') }}
 
   android-apk:
     runs-on: ubuntu-latest
